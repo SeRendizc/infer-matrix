@@ -1,10 +1,10 @@
 """
 Command-line interface for InferMatrix.
 
-This module defines the `infermatrix` command.
+这个模块定义 infermatrix 命令。
 
-For Stage A, the CLI only loads a YAML case and prints its basic information.
-Later, the CLI will run cases against mock or real OpenAI-compatible backends.
+阶段 A：CLI 只负责读取 YAML case。
+阶段 B：CLI 会把 mock backend 接进来，让 case 可以被真正 run 一次。
 """
 
 from pathlib import Path
@@ -13,11 +13,13 @@ import typer
 from rich.console import Console
 
 from infermatrix.cases import load_case
+from infermatrix.clients.mock_openai import MockOpenAIClient
 
 # Typer app object.
 # pyproject.toml points the `infermatrix` command to this object.
 app = typer.Typer(
-    help = "InferMatrix: Agentic LLM Systems behavior analysis framework."
+    help = "InferMatrix: Agentic LLM Systems behavior analysis framework.",
+    no_args_is_help=True
 )
 
 # Rich console gives us nicer terminal output.
@@ -58,5 +60,21 @@ def run(case_file: Path) -> None:
     console.print(f"Structured output: {case.features.structured_output}")
     console.print(f"Messages: {len(case.messages)}")
 
-    if case.expected.contains_text:
-        console.print(f"Expected text: {case.expected.contains_text}")
+    if case.backend != "mock":
+        console.print(
+            f"[bold red]Unsupported backnd in Phase B:[/bold redd] {case.backend}"
+        )
+        raise typer.Exit(code = 1)
+    
+    client = MockOpenAIClient()
+
+    try:
+        response = client.run_case(case)
+    except NotImplementedError as error:
+        console.print(f"[bold red]Unsupported case feature:[/bold red] {error}")
+        raise typer.Exit(code = 1) from error
+    
+    assistant_message = response["choices"][0]["message"]["content"]
+
+    console.print("[bold blue]Mock response[/bold blue]")
+    console.print(assistant_message)
