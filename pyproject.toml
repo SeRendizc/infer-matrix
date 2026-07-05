@@ -1,0 +1,25 @@
+[project]
+name = "infermatrix"
+version = "0.1.0"
+description = "Agentic LLM systems behavior analysis framework"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic==2.8.2",
+    "typer==0.16.0",
+    "pyyaml==6.0.2",
+    "rich==13.9.4"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.4",
+    "ruff==0.8.2"
+]
+
+[project.scripts]
+infermatrix = "infermatrix.cli:app"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

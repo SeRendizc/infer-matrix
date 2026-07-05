@@ -1,0 +1,18 @@
+case_id: basic_chat_001
+backend: mock
+model: mock-model
+
+features:
+  streaming: false
+  tool_calling: false
+  structured_output: false
+
+messages:
+  - role: user
+    content: "Explain what InferMatrix is in one sentence."
+
+expected:
+  contains_text: "InferMatrix"
+
+metadata:
+  purpose: "Validate that the case loader can parse a minimal chat case."
