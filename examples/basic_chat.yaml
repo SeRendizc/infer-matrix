@@ -16,3 +16,4 @@ expected:
 
 metadata:
   purpose: "Validate that the case loader can parse a minimal chat case."
+  mock_response: "InferMatrix is an Agentic LLM Systems behavior analysis framework."
