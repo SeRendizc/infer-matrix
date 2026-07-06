@@ -1,0 +1,25 @@
+case_id: streaming_json_001
+backend: mock
+model: mock-model
+
+features:
+  streaming: true
+  tool_calling: false
+  structured_output: true
+
+messages:
+  - role: user
+    content: "Return a small JSON object with status and answer."
+
+expected:
+  contains_text: '"status"'
+  json_schema_valid: true
+
+metadata:
+  purpose: "Validate that the mock backend can return OpenAI-compatible streaming chunks."
+  mock_stream_chunks:
+    - '{"status"'
+    - ': "ok"'
+    - ', "answer"'
+    - ': "InferMatrix streaming mock"'
+    - '}'

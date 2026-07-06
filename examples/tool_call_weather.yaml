@@ -1,0 +1,40 @@
+case_id: tool_call_weather_001
+backend: mock
+model: mock-model
+
+features:
+  streaming: false
+  tool_calling: true
+  structured_output: false
+
+messages:
+  - role: user
+    content: "What is the weather in Shenzhen?"
+
+tools:
+  - type: function
+    function:
+      name: get_weather
+      description: "Get current weather for a city."
+      parameters:
+        type: object
+        properties:
+          city:
+            type: string
+          unit:
+            type: string
+            enum:
+              - celsius
+              - fahrenheit
+        required:
+          - city
+
+expected:
+  tool_name: get_weather
+  arguments_schema_valid: true
+
+metadata:
+  purpose: "Validate that the mock backend can return an OpenAI-compatible tool call response."
+  mock_tool_arguments:
+    city: Shenzhen
+    unit: celsius
