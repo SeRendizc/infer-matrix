@@ -433,31 +433,78 @@ MockOpenAIClient does not support streaming yet.
 
 ---
 
-# 当前待办
+# 阶段 C：OpenAI-compatible Response Parser
 
-## 立即下一步
+## 当前状态
 
-1. 创建 `src/infermatrix/clients/` 目录。
-2. 创建 `src/infermatrix/clients/__init__.py`。
-3. 创建 `src/infermatrix/clients/base.py`。
-4. 定义 `BaseClient` 抽象基类。
-5. 创建 `src/infermatrix/clients/mock_openai.py`。
-6. 实现第一版 `MockOpenAIClient`。
-7. 创建 `tests/test_mock_client.py`。
-8. 跑通 mock client 的单元测试。
-9. 修改 CLI，让它能调用 mock client。
-10. 运行完整验证。
+待实现与验证。
 
-## 当前暂不处理
+## 本阶段目标
 
-* 不接 OpenAI API
-* 不接 vLLM
-* 不接 SGLang
-* 不做 streaming parser
-* 不做 tool call parser
-* 不做 JSON Schema checker
-* 不做 report 系统
-* 不做 Web UI
+阶段 C 的目标是实现一个专门的 response parser，用于解析 OpenAI-compatible Chat Completion 响应。
+
+阶段 B 中，CLI 直接通过下面这种方式读取模型文本：
+
+`response["choices"][0]["message"]["content"]`
+
+这种写法在最小闭环里可以接受，但随着后续加入 tool calling、streaming、structured output 和异常响应，CLI 会变得越来越乱。
+
+阶段 C 要把这部分逻辑抽出来，形成专门的 parser：
+
+`Mock response → parse_chat_completion_response() → ParsedAssistantMessage`
+
+## 新增文件
+
+- `src/infermatrix/parsers/__init__.py`
+- `src/infermatrix/parsers/chat_completion.py`
+- `tests/test_chat_completion_parser.py`
+
+## 修改文件
+
+- `src/infermatrix/cli.py`
+
+## 本阶段已实现能力
+
+- [ ] 定义 `ParsedAssistantMessage` 解析结果对象
+- [ ] 定义 `ChatCompletionParseError` 解析错误类型
+- [ ] 实现 `parse_chat_completion_response()`
+- [ ] 从 `choices[0].message.content` 提取 assistant 文本
+- [ ] 解析 `model`
+- [ ] 解析 `choice_index`
+- [ ] 解析 `finish_reason`
+- [ ] 对缺失 `choices` 的响应明确报错
+- [ ] 对空 `choices` 的响应明确报错
+- [ ] 对缺失 `message` 的响应明确报错
+- [ ] 对非 assistant role 明确报错
+- [ ] 对空 content 明确报错
+- [ ] 对 tool call response 暂时明确拒绝
+- [ ] CLI 改为调用 parser，而不是手动访问嵌套 dict
+- [ ] pytest 全部通过
+- [ ] CLI 手动验证通过
+
+## 本阶段学习点
+
+- OpenAI-compatible response 的嵌套结构
+- `choices[0]` 的含义
+- `message.role` 与 `message.content`
+- parser 和 CLI 的职责分离
+- 自定义异常
+- 解析结果对象
+- fail fast 思想
+- 正常路径测试和异常路径测试
+
+## 当前注意事项
+
+阶段 C 只解析普通非流式 assistant content response。
+
+以下能力暂时不做：
+
+- tool_calls 解析
+- streaming chunk 解析
+- structured output / JSON Schema 校验
+- 多个 choices 的对比分析
+
+这些能力会在后续阶段继续扩展。
 
 ---
 
