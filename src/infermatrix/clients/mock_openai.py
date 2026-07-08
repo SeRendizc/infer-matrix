@@ -53,9 +53,7 @@ class MockOpenAIClient(BaseClient):
         """
 
         if case.features.streaming:
-            raise NotImplementedError(
-                "Use stream_case() for streaming cases in Phase B-2."
-            )
+            raise NotImplementedError("Use stream_case() for streaming cases in Phase B-2.")
 
         if case.features.tool_calling:
             return self._build_tool_call_response(case)
@@ -76,9 +74,7 @@ class MockOpenAIClient(BaseClient):
         """
 
         if not case.features.streaming:
-            raise NotImplementedError(
-                "stream_case() only supports cases with features.streaming=true."
-            )
+            raise NotImplementedError("stream_case() only supports cases with features.streaming=true.")
 
         chunks = self._get_stream_content_chunks(case)
 
