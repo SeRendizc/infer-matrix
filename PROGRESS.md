@@ -508,6 +508,26 @@ MockOpenAIClient does not support streaming yet.
 
 ---
 
+# 阶段 B-2：Runner、Tool Call Mock 与 Streaming Mock
+
+## 当前状态
+
+进行中，待验证。
+
+## 本阶段归属
+
+本阶段仍然属于阶段 B：Mock Backend 与最小闭环。
+
+它不是阶段 C，也不是阶段 D。
+
+## 本阶段目标
+
+补齐阶段 B 里尚未完成的最小闭环能力：
+
+YAML case → InferCase → runner → MockOpenAIClient → raw response / streaming chunks → RunResult
+
+---
+
 # 下一次进度更新模板
 
 ````markdown

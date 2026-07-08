@@ -1,16 +1,15 @@
-"""
-Case definitions and case loading utilities.
+"""Case definitions and loader for InferMatrix.
 
-This module defines what an InferMatrix case looks like.
+这个模块负责把 YAML case 文件读取成结构化的 Python 对象。
 
-At this stage, a case is only a YAML file that describes:
-- which backend to use,
-- which model to use,
-- which features are enabled,
-- what messages are sent,
-- what behavior is expected.
+阶段 A：
+- 支持普通 messages
+- 支持 features
+- 支持 expected
+- 支持 metadata
 
-Later stages will use this case object to actually run requests.
+阶段 B-2：
+- 增加 tools 字段，用来描述 tool calling case 中可用的工具定义。
 """
 
 from pathlib import Path
@@ -19,145 +18,101 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
+
 class Message(BaseModel):
-    """
-    A single chat message.
+    """单条 chat message。
 
-    This follows the common chat-completion message format.
-
-    Example:
-        role: user
-        content: "Explain InferMatrix in one sentence."
+    role 表示消息角色。
+    content 表示消息文本。
     """
 
     model_config = ConfigDict(extra="forbid")
 
-    # Literal means role can only be one of these four strings.
-    # If YAML contains role: random, Pydantic will reject it.
     role: Literal["system", "user", "assistant", "tool"]
-
-    # The text content of the message.
     content: str
 
+
 class CaseFeatures(BaseModel):
-    """
-    Feature switches for one test case.
+    """一个 case 启用了哪些能力。
 
-    These flags describe which LLM-serving / Agent features are enabled.
-
-    In Stage A, we only store them.
-    In later stages, they will change how requests are sent and parsed.
+    这些字段不会直接调用模型，而是告诉 runner/client：
+    当前 case 期望模拟或测试哪些行为。
     """
 
     model_config = ConfigDict(extra="forbid")
-    
-    # Whether the response is streamed chunk by chunk.
+
     streaming: bool = False
-
-    # Whether the model is allowed or expected to call tools.
     tool_calling: bool = False
-
-    # Whether the response should follow a structured JSON schema.
     structured_output: bool = False
 
+
 class CaseExpected(BaseModel):
-    """
-    Expected behavior for one test case.
+    """一个 case 的预期结果。
 
-    This is intentionally simple for Stage A.
-
-    Later we will add more precise checks, such as:
-    - tool argument JSON validity,
-    - JSON Schema validation,
-    - stream merge correctness,
-    - backend behavior difference.
+    阶段 B-2 不完整验证这些字段。
+    它们会在阶段 C 的 parser/checker 中逐步用起来。
     """
 
     model_config = ConfigDict(extra="forbid")
 
-    # For a simple chat case, we may expect the final output to contain some text.
     contains_text: str | None = None
-
-    # Whether the final structured output should be valid under a JSON schema.
     json_schema_valid: bool | None = None
-
-    # Expected tool name, if tool calling is enabled.
     tool_name: str | None = None
-
-    # Whether tool call arguments should match the expected schema.
     arguments_schema_valid: bool | None = None
 
-class InferCase(BaseModel):
-    """
-    The complete structure of an InferMatrix case.
 
-    A YAML case file will be parsed into this Python object.
+class InferCase(BaseModel):
+    """InferMatrix 的核心 case 对象。
+
+    YAML case 会被读取并校验成这个对象。
+
+    字段说明：
+    - case_id: case 的唯一标识
+    - backend: 使用哪个 backend，目前主要是 mock
+    - model: 模型名
+    - features: 当前 case 涉及哪些能力
+    - messages: 输入消息
+    - tools: tool calling case 中的工具定义
+    - expected: 预期结果
+    - metadata: 补充信息，mock 阶段常用来控制假响应
     """
 
     model_config = ConfigDict(extra="forbid")
 
-    # Unique identifier of the case.
-    # Field(min_length=1) means empty case_id is not allowed.
-    case_id: str = Field(min_length = 1)
-
-    # Which backend to use.
-    # For now, only "mock" is used.
-    backend: str = Field(default = "mock")
-
-    # Which model to use.
-    # For now, only "mock-model" is used.
-    model: str = Field(default = "mock-model")
-
-    # Feature switches.
-    # If YAML does not provide features, use default values.
+    case_id: str = Field(min_length=1)
+    backend: str = Field(default="mock")
+    model: str = Field(default="mock-model")
     features: CaseFeatures = Field(default_factory=CaseFeatures)
-
-    # Chat messages.
-    # This is required. A case without messages is not useful.
     messages: list[Message]
-
-    # Expected behavior.
-    # If YAML does not provide expected, use an empty expected object.
+    tools: list[dict[str, Any]] = Field(default_factory=list)
     expected: CaseExpected = Field(default_factory=CaseExpected)
-
-    # Extra metadata.
-    # This can store purpose, source issue, notes, tags, etc.
     metadata: dict[str, Any] = Field(default_factory=dict)
 
-def load_case(path: str | Path) -> InferCase:
 
-    """
-    Load one InferMatrix case from a YAML file.
+def load_case(path: str | Path) -> InferCase:
+    """从 YAML 文件读取一个 InferMatrix case。
 
     Args:
-        path: Path to a YAML case file.
+        path: YAML case 文件路径。
 
     Returns:
-        An InferCase object.
+        InferCase: 通过 Pydantic 校验后的 case 对象。
 
     Raises:
-        FileNotFoundError: If the case file does not exist.
-        ValueError: If the YAML file is empty.
-        pydantic.ValidationError: If the YAML structure is invalid.
+        FileNotFoundError: case 文件不存在。
+        ValueError: case 文件为空。
+        pydantic.ValidationError: YAML 内容不符合 InferCase schema。
     """
 
-    # Convert string path to Path object.
-    # Path is safer and more convenient than plain strings for file operations.
     case_path = Path(path)
 
-    # Check whether the file exists before opening it.
     if not case_path.exists():
         raise FileNotFoundError(f"Case file not found: {case_path}")
 
-    # Open the YAML file using UTF-8.
-    # UTF-8 avoids issues with Chinese or special characters.
     with case_path.open("r", encoding="utf-8") as file:
         raw = yaml.safe_load(file)
 
-    # yaml.safe_load returns None if the file is empty.
     if raw is None:
         raise ValueError(f"Case file is empty: {case_path}")
 
-    # Convert the raw dictionary into a validated InferCase object.
-    # This is where Pydantic checks types and required fields.
     return InferCase.model_validate(raw)
