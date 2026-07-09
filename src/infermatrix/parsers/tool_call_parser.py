@@ -57,7 +57,7 @@ class ToolCallParseError(ValueError):
     - function.arguments 不是合法 JSON string
     """
 
-class ParseToolCall(BaseModel):
+class ParsedToolCall(BaseModel):
     """解析后的单个 tool call。
 
     一个 assistant message 里可能包含多个 tool call。
@@ -69,4 +69,114 @@ class ParseToolCall(BaseModel):
     - name: 函数/工具名，例如 get_weather
     - raw_arguments: 原始 JSON 字符串
     - arguments: json.loads(raw_arguments) 后得到的 Python dict
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(min_length=1)
+    type: Literal["function"] = "function"
+    name: str = Field(min_length=1)
+    raw_arguents: str
+    arguments: dict[str, Any]
+
+
+class ParsedToolCallMessage(BaseModel):
+    """解析后的 assistant tool call message。
+
+    这是 parse_tool_call_response() 的返回对象。
+
+    它不是单个 tool call，而是“一条 assistant 消息”。
+    这条 assistant 消息里可能有一个或多个 tool calls。
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    model: str | None = None
+    choice_index: int = 0
+    role: Literal["assistant"] = "assistant"
+    finish_reason: str | None = None
+    tool_calls: list[ParsedToolCall] = Field(min_length=1)
+
+
+def parse_tool_call_response(response: dict[str, Any]) -> ParsedToolCallMessage:
+    """解析 OpenAI-compatible non-streaming tool call response。
+
+    Args:
+        response: backend 返回的原始 response dict。
+
+    Returns:
+        ParsedToolCallMessage: 解析后的 tool call message。
+
+    Raises:
+        ToolCallParseError: 当响应结构不符合阶段 C-1 支持的格式。
+
+    阶段 C-1 的解析边界：
+        - 只解析 choices[0]
+        - 只支持 assistant message
+        - 只支持 message.tool_calls
+        - 只支持 type == "function"
+        - function.arguments 必须是合法 JSON string
+        - arguments 解析后必须是 JSON object，也就是 Python dict
+    """
+
+    model = _optinal_string(response, "model")
+    choices = _required_list(response, "choices")
+
+    if not choices:
+        raise ToolCallParseError("Response field 'choices' must not be empty.")
+
+    first_choice = choices[0]
+    if not isinstance(first_choice, dict):
+        raise ToolCallParseError("Response field 'choices' must be an object.")
+
+    choice_index = first_choice.get("index", 0)
+    if not isinstance(choice_index, int):
+        raise ToolCallParseError("Response choices[0].index must be an integer.")
+
+    finish_reason = first_choice.get("finish_reason")
+    if finish_reason is not None and not isinstance(finish_reason, str):
+        raise ToolCallParseError("Response choices[0].finish_reason must be a string or null.")
+
+    message = first_choice.get("message")
+    if not isinstance(message, dict):
+        raise ToolCallParseError("Response choices[0].message must be an object.")
+
+    role = message.get("role")
+    if role != "assistant":
+        raise ToolCallParseError("Response choices[0].message.role must be 'assistant'.")
+
+    tool_calls = _required_list(message, "tool_calls")
+    if not tool_calls:
+        raise ToolCallParseError("Response choices[0].message.tool_calls must not be empty.")
+
+    parsed_tool_calls = [
+        _parse_single_tool_call(tool_call, index=index)
+        for index, tool_call in enumerate(tool_calls)
+    ]
+
+    return ParsedToolCallMessage(
+        model = model,
+        choice_index = choice_index,
+        role = "assistant",
+        finish_reason = finish_reason,
+        tool_calls = parsed_tool_calls,
+    )
+
+
+def _parse_single_tool_call(tool_call: Any, index: int) -> ParsedToolCall:
+    """解析 tool_calls 列表中的单个 tool call。
+
+    Args:
+        tool_call: 原始 tool_call 对象。
+        index: 当前 tool_call 在 tool_calls 列表中的位置。
+
+    Returns:
+        ParsedToolCall: 解析后的单个 tool call。
+
+    Raises:
+        ToolCallParseError: 当前 tool call 结构不合法。
+
+    为什么传 index？
+        为了让错误信息更清楚。
+        例如 tool_calls[0] 坏了，还是 tool_calls[1] 坏了。
     """
