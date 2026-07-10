@@ -10,6 +10,11 @@ from infermatrix.parsers.stream_parser import (
     StreamParseError,
     parse_streaming_chunks,
 )
+from infermatrix.parsers.structured_output_parser import (
+    ParsedStructuredOutput,
+    StructuredOutputParseError,
+    parse_structured_output_text,
+)
 from infermatrix.parsers.tool_call_parser import (
     ParsedToolCall,
     ParsedToolCallMessage,
@@ -24,6 +29,9 @@ __all__ = [
     "ParsedStreamMessage",
     "StreamParseError",
     "parse_streaming_chunks",
+    "ParsedStructuredOutput",
+    "StructuredOutputParseError",
+    "parse_structured_output_text",
     "ParsedToolCall",
     "ParsedToolCallMessage",
     "ToolCallParseError",

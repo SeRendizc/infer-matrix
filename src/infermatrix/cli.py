@@ -22,6 +22,8 @@ from infermatrix.parsers import (
     parse_tool_call_response,
     StreamParseError,
     parse_streaming_chunks,
+    StructuredOutputParseError,
+    parse_structured_output_text,
 )
 from infermatrix.runner import UnsupportedBackendError, run_case
 
@@ -79,7 +81,9 @@ def run(case_file: Path) -> None:
         try:
             parsed = parse_streaming_chunks(chunks)
         except StreamParseError as error:
-            console.print(f"[bold red]Failed to parse streaming chunks:[/bold red] {error}")
+            console.print(
+                f"[bold red]Failed to parse streaming chunks:[/bold red] {error}"
+            )
             raise typer.Exit(code=1) from error
 
         console.print("[bold blue]Parsed streaming message[/bold blue]")
@@ -87,6 +91,19 @@ def run(case_file: Path) -> None:
         console.print(f"Finish reason: {parsed.finish_reason}")
         console.print(f"Content chunks: {len(parsed.content_chunks)}")
         console.print(f"Merged content: {parsed.merged_content}")
+
+        if case.features.structured_output:
+            try:
+                structured_output = parse_structured_output_text(parsed.merged_content)
+            except StructuredOutputParseError as error:
+                console.print(
+                    f"[bold red]Failed to parse structured output:[/bold red] {error}"
+                )
+                raise typer.Exit(code=1) from error
+
+            console.print("[bold blue]Parsed structured output[/bold blue]")
+            console.print(f"Keys: {list(structured_output.data.keys())}")
+            console.print(f"Data: {structured_output.data}")
 
         return
 
@@ -126,3 +143,16 @@ def run(case_file: Path) -> None:
     console.print(f"Role: {parsed.role}")
     console.print(f"Finish reason: {parsed.finish_reason}")
     console.print(f"Content: {parsed.content}")
+
+    if case.features.structured_output:
+        try:
+            structured_output = parse_structured_output_text(parsed.content)
+        except StructuredOutputParseError as error:
+            console.print(
+                f"[bold red]Failed to parse structured output:[/bold red] {error}"
+            )
+            raise typer.Exit(code=1) from error
+
+        console.print("[bold blue]Parsed structured output[/bold blue]")
+        console.print(f"Keys: {list(structured_output.data.keys())}")
+        console.print(f"Data: {structured_output.data}")
