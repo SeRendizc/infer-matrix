@@ -20,6 +20,8 @@ from infermatrix.parsers import (
     ChatCompletionParseError,
     ToolCallParseError,
     parse_tool_call_response,
+    StreamParseError,
+    parse_streaming_chunks,
 )
 from infermatrix.runner import UnsupportedBackendError, run_case
 
@@ -73,16 +75,18 @@ def run(case_file: Path) -> None:
 
     if result.response_type == "chat_completion_chunks":
         chunks = result.chunks or []
-        console.print(f"Streaming chunks: {len(chunks)}")
 
-        merged_content = "".join(
-            choice.get("delta", {}).get("content", "")
-            for chunk in chunks
-            for choice in chunk.get("choices", [])
-        )
+        try:
+            parsed = parse_streaming_chunks(chunks)
+        except StreamParseError as error:
+            console.print(f"[bold red]Failed to parse streaming chunks:[/bold red] {error}")
+            raise typer.Exit(code=1) from error
 
-        if merged_content:
-            console.print(f"Merged content preview: {merged_content}")
+        console.print("[bold blue]Parsed streaming message[/bold blue]")
+        console.print(f"Role: {parsed.role}")
+        console.print(f"Finish reason: {parsed.finish_reason}")
+        console.print(f"Content chunks: {len(parsed.content_chunks)}")
+        console.print(f"Merged content: {parsed.merged_content}")
 
         return
 
