@@ -25,6 +25,7 @@ from infermatrix.parsers import (
     StructuredOutputParseError,
     parse_structured_output_text,
 )
+from infermatrix.analyzers.schema_checker import check_json_schema
 from infermatrix.runner import UnsupportedBackendError, run_case
 
 
@@ -96,14 +97,21 @@ def run(case_file: Path) -> None:
             try:
                 structured_output = parse_structured_output_text(parsed.merged_content)
             except StructuredOutputParseError as error:
-                console.print(
-                    f"[bold red]Failed to parse structured output:[/bold red] {error}"
-                )
+                console.print(f"[bold red]Failed to parse structured output:[/bold red] {error}")
                 raise typer.Exit(code=1) from error
 
             console.print("[bold blue]Parsed structured output[/bold blue]")
             console.print(f"Keys: {list(structured_output.data.keys())}")
             console.print(f"Data: {structured_output.data}")
+
+            schema_result = check_json_schema(case, structured_output)
+
+            console.print("[bold blue]Schema check result[/bold blue]")
+            console.print(f"Status: {schema_result.status}")
+            console.print(f"Reason: {schema_result.reason}")
+
+            if schema_result.failed:
+                raise typer.Exit(code=1)
 
         return
 
@@ -148,11 +156,18 @@ def run(case_file: Path) -> None:
         try:
             structured_output = parse_structured_output_text(parsed.content)
         except StructuredOutputParseError as error:
-            console.print(
-                f"[bold red]Failed to parse structured output:[/bold red] {error}"
-            )
+            console.print(f"[bold red]Failed to parse structured output:[/bold red] {error}")
             raise typer.Exit(code=1) from error
 
         console.print("[bold blue]Parsed structured output[/bold blue]")
         console.print(f"Keys: {list(structured_output.data.keys())}")
         console.print(f"Data: {structured_output.data}")
+
+        schema_result = check_json_schema(case, structured_output)
+
+        console.print("[bold blue]Schema check result[/bold blue]")
+        console.print(f"Status: {schema_result.status}")
+        console.print(f"Reason: {schema_result.reason}")
+
+        if schema_result.failed:
+            raise typer.Exit(code=1)

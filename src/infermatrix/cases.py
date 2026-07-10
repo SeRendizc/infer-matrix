@@ -49,14 +49,18 @@ class CaseFeatures(BaseModel):
 class CaseExpected(BaseModel):
     """一个 case 的预期结果。
 
-    阶段 B-2 不完整验证这些字段。
-    它们会在阶段 C 的 parser/checker 中逐步用起来。
+    expected 用来描述我们希望模型输出满足什么条件。
+
+    注意：
+    parser 不直接使用 expected。
+    expected 主要给 analyzer/checker 使用。
     """
 
     model_config = ConfigDict(extra="forbid")
 
     contains_text: str | None = None
     json_schema_valid: bool | None = None
+    json_schema: dict[str, Any] | None = None
     tool_name: str | None = None
     arguments_schema_valid: bool | None = None
 

@@ -1,548 +1,391 @@
 # InferMatrix 项目进度
 
+## 项目定位
+
+InferMatrix 是一个面向 Agentic LLM Systems 的行为分析框架。
+
+它关注 OpenAI-compatible 大模型推理服务在以下能力组合下的行为差异、失败模式和可复现输出：
+
+- 普通 chat completion
+- tool calling
+- streaming response
+- structured output
+- JSON Schema validation
+- 后续 backend 差异对比
+
+InferMatrix 不是通用模型排行榜，也不是普通 AI 应用 demo。它的目标是帮助我理解 LLM 应用层、Agent 工具调用层和 LLM serving 接口层之间的交叉问题，并逐步靠近 LLM Systems / AI Infra 方向。
+
+---
+
 ## 当前阶段
 
-阶段 B：Mock OpenAI-compatible Backend
+阶段 C-4：Schema Checker / Analyzer
 
-## 当前状态
-
-阶段 A 已完成。
-阶段 B 进行中，待验证。
-
-## 项目当前定位
-
-InferMatrix 是一个面向 Agentic LLM Systems 的行为分析框架，关注 OpenAI-compatible 大模型推理服务在 streaming、structured output、tool calling 等功能组合下的响应行为、失败模式和可复现报告。
-
-当前项目仍处于早期基础建设阶段，不连接真实模型，不连接 vLLM、SGLang 或 OpenAI API。
+当前状态：进行中，待验证。
 
 ---
 
-# 总体阶段进度
+## 阶段总览
 
-| 阶段   | 名称                                 | 状态  |
-| ---- | ---------------------------------- | --- |
-| 阶段 A | 项目骨架与 YAML Case Loader             | 已完成 |
-| 阶段 B | Mock OpenAI-compatible Backend     | 进行中 |
-| 阶段 C | Parser 与 Checker                   | 未开始 |
-| 阶段 D | Markdown / JSONL Report            | 未开始 |
-| 阶段 E | OpenAI-compatible Endpoint Adapter | 未开始 |
-| 阶段 F | vLLM / SGLang 行为分析                 | 未开始 |
-| 阶段 G | 开源 issue / PR 贡献                   | 未开始 |
-| 阶段 H | 求职化包装                              | 未开始 |
+### 阶段 A：项目定义与骨架
+
+状态：已完成。
+
+目标：
+
+- 搭建 Python package 工程骨架
+- 定义最小 YAML case schema
+- 实现 case loader
+- 提供 Typer CLI 入口
+- 添加第一批 pytest 测试
+
+已完成：
+
+- [x] 创建 `pyproject.toml`
+- [x] 创建 `src/infermatrix/`
+- [x] 创建 `examples/basic_chat.yaml`
+- [x] 实现 `src/infermatrix/cases.py`
+- [x] 实现基础 CLI
+- [x] 添加 `tests/test_case_loader.py`
+- [x] pytest 通过
+- [x] 提交并合并到 main
+
+核心文件：
+
+- `README.md`
+- `pyproject.toml`
+- `examples/basic_chat.yaml`
+- `src/infermatrix/cases.py`
+- `src/infermatrix/cli.py`
+- `tests/test_case_loader.py`
+
+学习点：
+
+- Python package 结构
+- `pyproject.toml`
+- Typer
+- Pydantic
+- PyYAML
+- pytest
+- 基础 Git workflow
 
 ---
 
-# 阶段 A：项目骨架与 YAML Case Loader
+### 阶段 B-1：Mock Backend 普通 Chat Response
 
-## 阶段状态
+状态：已完成。
 
-已完成。
+目标：
 
-## 本阶段目标
+- 不调用真实模型
+- 用 mock backend 生成稳定的 OpenAI-compatible chat completion response
+- 让 basic chat case 能跑通最小闭环
 
-本阶段的目标是搭建 InferMatrix 的最小 Python 工程基础，包括：
+已完成：
 
-* Python 项目目录结构
-* 项目配置文件 `pyproject.toml`
-* YAML case 文件格式
-* Pydantic 数据模型
-* YAML case 读取函数
-* Typer 命令行入口
-* 第一个 pytest 自动测试
+- [x] 新增 `clients/base.py`
+- [x] 新增 `clients/mock_openai.py`
+- [x] 实现 `MockOpenAIClient`
+- [x] 支持普通 non-streaming chat response
+- [x] CLI 能调用 mock backend
+- [x] 添加 mock client 测试
+- [x] pytest 通过
+- [x] 提交并合并到 main
 
-本阶段不连接真实模型，也不连接 vLLM、SGLang 或 OpenAI API。
+核心文件：
 
-## 已完成事项
+- `src/infermatrix/clients/base.py`
+- `src/infermatrix/clients/mock_openai.py`
+- `tests/test_mock_client.py`
 
-* [x] 创建项目仓库
-* [x] 创建 Python package 目录结构
-* [x] 添加 `pyproject.toml`
-* [x] 添加 `README.md`
-* [x] 添加 `examples/basic_chat.yaml`
-* [x] 实现 `src/infermatrix/cases.py`
-* [x] 使用 `ConfigDict(extra="forbid")` 启用严格字段校验
-* [x] 实现 `src/infermatrix/cli.py`
-* [x] 添加 `tests/test_case_loader.py`
-* [x] 成功运行 pytest
-* [x] 成功运行 CLI 命令
+学习点：
 
-## 已验证命令
-
-### 1. 运行测试
-
-命令：
-
-```bash
-pytest
-```
-
-结果：
-
-```text
-1 passed
-```
-
-说明：
-
-测试文件 `tests/test_case_loader.py` 已成功验证 `load_case()` 可以正确读取 `examples/basic_chat.yaml`。
-
-### 2. 检查 YAML 是否正确解析为 Python 对象
-
-命令：
-
-```bash
-python -c "from infermatrix.cases import load_case; c=load_case('examples/basic_chat.yaml'); print(c.model_dump())"
-```
-
-结果摘要：
-
-`case_id`、`backend`、`model`、`features`、`messages`、`expected` 和 `metadata` 都已被正确解析。
-
-其中：
-
-* `features.streaming` 为 `False`
-* `features.tool_calling` 为 `False`
-* `features.structured_output` 为 `False`
-* `expected.contains_text` 为 `"InferMatrix"`
-
-### 3. 运行 CLI
-
-命令：
-
-```bash
-infermatrix run examples/basic_chat.yaml
-```
-
-结果摘要：
-
-CLI 成功读取并显示了 case 的基本信息，包括：
-
-* Case ID
-* Backend
-* Model
-* Streaming
-* Tool calling
-* Structured output
-* Messages
-* Expected text
-
-## 本阶段遇到的问题
-
-### 问题 1：Pydantic 字段缺少类型注解
-
-报错摘要：
-
-```text
-Field 'backend' requires a type annotation
-```
-
-原因：
-
-Pydantic 模型字段必须写成“字段名 + 类型 + 默认值”的形式。
-
-错误写法示例：
-
-```python
-backend = Field(default="mock")
-```
-
-正确写法：
-
-```python
-backend: str = Field(default="mock")
-```
-
-解决方式：
-
-为 `backend`、`model`、`features`、`messages`、`expected`、`metadata` 等字段补充明确类型注解。
-
-### 问题 2：YAML 字段名和 Pydantic 模型字段名不一致
-
-报错摘要：
-
-```text
-case_id Field required
-```
-
-原因：
-
-YAML 中字段名写成了 `case-id`，但 Pydantic 模型中字段名是 `case_id`。
-
-解决方式：
-
-统一字段名，使用：
-
-```yaml
-case_id: basic_chat_001
-```
-
-### 问题 3：`expected` 写成列表或字段拼写错误
-
-报错或现象：
-
-`expected` 无法正确解析，或者 `contains_text` 结果为 `None`。
-
-原因：
-
-YAML 中可能写成了：
-
-```yaml
-contains_test
-```
-
-或者把 `expected` 写成了列表形式。
-
-正确写法：
-
-```yaml
-expected:
-  contains_text: "InferMatrix"
-```
-
-解决方式：
-
-确保 YAML 中的 `expected` 是一个对象，而不是列表；并且字段名必须是 `contains_text`。
-
-### 问题 4：`feature` 和 `features` 字段名不一致
-
-报错摘要：
-
-```text
-InferCase object has no attribute 'features'
-```
-
-原因：
-
-Pydantic 模型中字段写成了 `feature`，但 YAML、测试和 CLI 中使用的是 `features`。
-
-解决方式：
-
-统一使用复数形式：
-
-```python
-features: CaseFeatures = Field(default_factory=CaseFeatures)
-```
-
-### 问题 5：Typer CLI 解析异常
-
-现象：
-
-CLI 运行时出现参数解析问题。
-
-解决方式：
-
-* 将 Typer 升级到 `0.16.0`
-* 在 `cli.py` 中添加 `@app.callback()`，让 `infermatrix` 明确作为命令组工作
-
-## 本阶段学到的概念
-
-* Python 项目目录结构
-* `src layout`
-* `pyproject.toml`
-* 虚拟环境
-* editable install
-* YAML 配置文件
-* Pydantic 数据模型
-* 类型注解
-* 严格字段校验
-* Typer 命令行工具
-* pytest 自动测试
-* Git 阶段性提交
-
-## 当前理解总结
-
-InferMatrix 的基础流程是：
-
-```text
-YAML case 文件
-  ↓
-cases.py 定义 case 应该长什么样
-  ↓
-load_case() 把 YAML 读取成经过校验的 Python 对象
-  ↓
-cli.py 把这个能力暴露成命令行工具
-  ↓
-pytest 验证 case loader 是否按预期工作
-```
-
-当前阶段完成的是 InferMatrix 的第一层能力：**定义和读取实验用例**。
+- 为什么先做 mock backend
+- OpenAI-compatible chat completion response 基本结构
+- client 和 CLI 的职责区别
+- 如何用 mock response 做稳定测试
 
 ---
 
-# 阶段 B：Mock OpenAI-compatible Backend
+### 阶段 C-0：普通 Chat Completion Parser
 
-## 阶段状态
+状态：已完成。
 
-进行中，待验证。
+目标：
 
-## 本阶段目标
+- 把普通 chat completion response 解析成结构化对象
+- 不再在 CLI 中手写 `response["choices"][0]["message"]["content"]`
 
-本阶段目标是实现一个假的 OpenAI-compatible backend，使 InferMatrix 在不依赖真实模型、不依赖网络、不依赖 GPU、不依赖 API key 的情况下，也能运行一个 case 并得到稳定、可控的模型响应。
+已完成：
 
-阶段 B 的核心流程是：
+- [x] 新增 `parsers/chat_completion.py`
+- [x] 定义 `ChatCompletionParseError`
+- [x] 定义 `ParsedAssistantMessage`
+- [x] 实现 `parse_chat_completion_response()`
+- [x] 添加 parser 测试
+- [x] CLI 使用 parser
+- [x] pytest 通过
+- [x] 提交并合并到 main
 
-```text
-YAML case
-  ↓
-InferCase 对象
-  ↓
-MockOpenAIClient
-  ↓
-OpenAI-compatible 风格响应
-```
+核心文件：
 
-## 为什么要先做 Mock Backend
-
-真实模型有很多不稳定因素：
-
-* 模型输出不确定
-* API 可能限流
-* 本地模型环境可能难装
-* vLLM / SGLang 可能受 CUDA、显卡、依赖影响
-* streaming 输出更难调试
-
-Mock Backend 可以先隔离这些外部不确定性，让我们专注开发：
-
-* client 抽象
-* response 结构
-* parser
-* checker
-* report
-* runner
-
-## 新增文件
-
-* [ ] `src/infermatrix/clients/__init__.py`
-* [ ] `src/infermatrix/clients/base.py`
-* [ ] `src/infermatrix/clients/mock_openai.py`
-* [ ] `tests/test_mock_client.py`
-
-## 修改文件
-
-* [ ] `examples/basic_chat.yaml`
-* [ ] `src/infermatrix/cli.py`
-
-## 本阶段计划实现能力
-
-* [ ] 定义 `BaseClient` 抽象基类
-* [ ] 实现 `MockOpenAIClient`
-* [ ] 返回类似 OpenAI Chat Completion 的响应结构
-* [ ] 支持从 `metadata.mock_response` 控制 mock 回复内容
-* [ ] 对 streaming / tool calling / structured output 暂不支持的功能明确报错
-* [ ] 添加 mock client 单元测试
-* [ ] CLI 能调用 mock backend 并打印 mock response
-* [ ] pytest 全部通过
-* [ ] CLI 手动验证通过
-
-## 当前支持范围
-
-阶段 B 第一版只支持普通非流式 chat case。
-
-以下功能暂不支持：
-
-* streaming
-* tool calling
-* structured output
-
-这些功能会在后续阶段逐步加入。
-
-## 本阶段学习点
-
-* client / backend 的区别
-* mock 的作用
-* 抽象基类 `ABC`
-* `abstractmethod`
-* 继承
-* OpenAI-compatible response 基本结构
-* fail fast 思想
-* 用 pytest 验证正常路径和异常路径
-
-## 本阶段核心概念解释
-
-### client 是什么？
-
-在 InferMatrix 中，client 是负责和某个模型后端交互的对象。
-
-例如：
-
-* `MockOpenAIClient`：假的模型后端客户端
-* `OpenAICompatibleClient`：未来用于请求真实 OpenAI-compatible API 的客户端
-* `VLLMClient`：未来可能用于适配 vLLM
-* `SGLangClient`：未来可能用于适配 SGLang
-
-现阶段的 `MockOpenAIClient` 不会真的请求模型，只会返回一个稳定、可控的假响应。
-
-### backend 是什么？
-
-backend 是模型服务后端。
-
-例如：
-
-* mock backend
-* OpenAI API
-* vLLM server
-* SGLang server
-* Ollama
-* LM Studio
-* 公司内部模型服务
-
-client 是“去和 backend 打交道的代码对象”。
-
-### mock 是什么？
-
-mock 是假的、模拟的对象。
-
-Mock Backend 的作用是：
-
-* 不依赖真实模型
-* 不依赖网络
-* 不依赖 API key
-* 不依赖 GPU
-* 能稳定返回我们预设的响应
-* 方便测试 parser、checker 和 report
-
-### 为什么要 fail fast？
-
-fail fast 的意思是：暂时不支持的功能，不要假装支持，而是直接明确报错。
-
-例如阶段 B 暂不支持 streaming。如果 YAML 中写：
-
-```yaml
-features:
-  streaming: true
-```
-
-Mock client 应该直接报错：
-
-```text
-MockOpenAIClient does not support streaming yet.
-```
-
-这样可以避免错误被隐藏到后面的流程里。
-
-## 本阶段完成标准
-
-阶段 B 完成时，应该满足：
-
-* `pytest` 全部通过
-* `infermatrix run examples/basic_chat.yaml` 可以通过 MockOpenAIClient 得到响应
-* CLI 能显示 mock response 的主要内容
-* 如果 case 启用了暂不支持的功能，程序能明确报错
-* 你能解释 `BaseClient` 和 `MockOpenAIClient` 的关系
-* 你能解释为什么先 mock，而不是直接接真实模型
-
----
-
-# 阶段 C：OpenAI-compatible Response Parser
-
-## 当前状态
-
-待实现与验证。
-
-## 本阶段目标
-
-阶段 C 的目标是实现一个专门的 response parser，用于解析 OpenAI-compatible Chat Completion 响应。
-
-阶段 B 中，CLI 直接通过下面这种方式读取模型文本：
-
-`response["choices"][0]["message"]["content"]`
-
-这种写法在最小闭环里可以接受，但随着后续加入 tool calling、streaming、structured output 和异常响应，CLI 会变得越来越乱。
-
-阶段 C 要把这部分逻辑抽出来，形成专门的 parser：
-
-`Mock response → parse_chat_completion_response() → ParsedAssistantMessage`
-
-## 新增文件
-
-- `src/infermatrix/parsers/__init__.py`
 - `src/infermatrix/parsers/chat_completion.py`
 - `tests/test_chat_completion_parser.py`
 
-## 修改文件
+学习点：
 
-- `src/infermatrix/cli.py`
+- raw response 和 parsed response 的区别
+- parser 的职责
+- 为什么要有自定义 ParseError
+- 为什么 parser 要检查 response shape
 
-## 本阶段已实现能力
+---
 
-- [ ] 定义 `ParsedAssistantMessage` 解析结果对象
-- [ ] 定义 `ChatCompletionParseError` 解析错误类型
-- [ ] 实现 `parse_chat_completion_response()`
-- [ ] 从 `choices[0].message.content` 提取 assistant 文本
-- [ ] 解析 `model`
-- [ ] 解析 `choice_index`
-- [ ] 解析 `finish_reason`
-- [ ] 对缺失 `choices` 的响应明确报错
-- [ ] 对空 `choices` 的响应明确报错
-- [ ] 对缺失 `message` 的响应明确报错
-- [ ] 对非 assistant role 明确报错
-- [ ] 对空 content 明确报错
-- [ ] 对 tool call response 暂时明确拒绝
-- [ ] CLI 改为调用 parser，而不是手动访问嵌套 dict
+### 阶段 B-2：Runner、Tool Call Mock 与 Streaming Mock
+
+状态：已完成。
+
+目标：
+
+- 补齐阶段 B 的 mock backend 最小闭环
+- 新增 runner 作为 case 执行中枢
+- 支持 tool call mock response
+- 支持 streaming chunks mock response
+
+已完成：
+
+- [x] 新增 `runner.py`
+- [x] 定义 `RunResult`
+- [x] `InferCase` 支持 `tools`
+- [x] `MockOpenAIClient` 支持普通 chat response
+- [x] `MockOpenAIClient` 支持 tool call response
+- [x] `MockOpenAIClient` 支持 streaming chunks
+- [x] 新增 `examples/tool_call_weather.yaml`
+- [x] 新增 `examples/streaming_json.yaml`
+- [x] 新增 `tests/test_runner.py`
+- [x] CLI 改为调用 runner
+- [x] pytest 通过
+- [x] 提交并合并到 main
+
+核心文件：
+
+- `src/infermatrix/runner.py`
+- `examples/tool_call_weather.yaml`
+- `examples/streaming_json.yaml`
+- `tests/test_runner.py`
+
+学习点：
+
+- runner 和 client 的职责区别
+- tool_calls 的 OpenAI-compatible 响应结构
+- streaming chunk 的基本结构
+- 为什么 streaming response 不是一个完整 message
+- 为什么阶段 B 只模拟，不做完整解析和校验
+
+---
+
+### 阶段 C-1：Tool Call Parser
+
+状态：已完成。
+
+目标：
+
+- 把 non-streaming tool call response 从 raw dict 解析成结构化对象
+- 把 `function.arguments` 从 JSON string 解析成 Python dict
+
+已完成：
+
+- [x] 新增 `parsers/tool_call_parser.py`
+- [x] 定义 `ToolCallParseError`
+- [x] 定义 `ParsedToolCall`
+- [x] 定义 `ParsedToolCallMessage`
+- [x] 实现 `parse_tool_call_response()`
+- [x] 支持解析单个 tool call
+- [x] 支持解析多个 tool calls
+- [x] 非法 JSON arguments 能明确失败
+- [x] arguments 不是 JSON object 时能明确失败
+- [x] 缺少 tool_calls 时能明确失败
+- [x] CLI 对 tool calling case 使用 tool call parser
+- [x] pytest 通过
+- [x] 提交并合并到 main
+
+核心文件：
+
+- `src/infermatrix/parsers/tool_call_parser.py`
+- `tests/test_tool_call_parser.py`
+
+学习点：
+
+- OpenAI-compatible tool_calls response 结构
+- `function.arguments` 为什么是 JSON string
+- JSON string 和 Python dict 的区别
+- parser 和 checker 的职责区别
+- 如何设计清晰的 parse failure reason
+
+---
+
+### 阶段 C-2：Stream Parser
+
+状态：已完成。
+
+目标：
+
+- 把 OpenAI-compatible streaming chunks 解析成结构化对象
+- 合并多个 `delta.content`
+- 提取 assistant role 和 finish_reason
+
+已完成：
+
+- [x] 新增 `parsers/stream_parser.py`
+- [x] 定义 `StreamParseError`
+- [x] 定义 `ParsedStreamMessage`
+- [x] 实现 `parse_streaming_chunks()`
+- [x] 支持收集 `delta.role`
+- [x] 支持收集多个 `delta.content`
+- [x] 支持生成 `merged_content`
+- [x] 支持提取 `finish_reason`
+- [x] 缺少 choices 时能明确失败
+- [x] delta 非法时能明确失败
+- [x] 缺少 assistant role 时能明确失败
+- [x] 缺少 content chunk 时能明确失败
+- [x] 缺少 finish_reason 时能明确失败
+- [x] CLI 对 streaming case 使用 stream parser
+- [x] pytest 通过
+- [x] 提交并合并到 main
+
+核心文件：
+
+- `src/infermatrix/parsers/stream_parser.py`
+- `tests/test_stream_parser.py`
+
+学习点：
+
+- streaming response 和普通 response 的区别
+- `delta.role`
+- `delta.content`
+- `finish_reason`
+- 为什么 streaming JSON 需要先合并再解析
+- parser 为什么不能只是“尽量拼出来”
+
+---
+
+### 阶段 C-3：Structured Output Parser
+
+状态：已完成。
+
+目标：
+
+- 把模型输出的 JSON 文本解析成 Python dict
+- 支持从 streaming parser 的 `merged_content` 继续解析 structured output
+
+已完成：
+
+- [x] 新增 `parsers/structured_output_parser.py`
+- [x] 定义 `StructuredOutputParseError`
+- [x] 定义 `ParsedStructuredOutput`
+- [x] 实现 `parse_structured_output_text()`
+- [x] 支持解析 JSON object 文本
+- [x] 支持解析 streaming parser 合并后的 JSON 文本
+- [x] 空文本能明确失败
+- [x] 非法 JSON 能明确失败
+- [x] JSON array 能明确失败
+- [x] CLI 对 `structured_output=true` 的 case 使用 structured output parser
+- [x] pytest 通过
+- [x] 提交并合并到 main
+
+核心文件：
+
+- `src/infermatrix/parsers/structured_output_parser.py`
+- `tests/test_structured_output_parser.py`
+
+学习点：
+
+- 模型输出看起来像 JSON，但本质仍然是字符串
+- `json.loads()` 的作用
+- JSON 语法合法和 JSON Schema 合法是两件事
+- 为什么 parser 只做 JSON 解析，不做 schema validation
+
+---
+
+### 阶段 C-4：Schema Checker / Analyzer
+
+状态：进行中，待验证。
+
+目标：
+
+- 引入 analyzer/checker 层
+- 检查 `ParsedStructuredOutput.data` 是否符合 `case.expected.json_schema`
+- 输出 pass / fail / skip 三种检查结果
+
+计划新增：
+
+- [ ] `src/infermatrix/analyzers/__init__.py`
+- [ ] `src/infermatrix/analyzers/schema_checker.py`
+- [ ] `tests/test_schema_checker.py`
+
+计划修改：
+
+- [ ] `src/infermatrix/cases.py`
+- [ ] `examples/streaming_json.yaml`
+- [ ] `src/infermatrix/cli.py`
+- [ ] `pyproject.toml`
+- [ ] `PROGRESS.md`
+- [ ] `DECISIONS.md`
+
+计划实现：
+
+- [ ] `CaseExpected` 支持 `json_schema`
+- [ ] `streaming_json.yaml` 配置 expected JSON Schema
+- [ ] 定义 `SchemaCheckResult`
+- [ ] 实现 `check_json_schema()`
+- [ ] structured output 符合 schema 时返回 pass
+- [ ] 缺 required field 时返回 fail
+- [ ] 字段类型错误时返回 fail
+- [ ] 多余字段违反 `additionalProperties: false` 时返回 fail
+- [ ] 未开启 `json_schema_valid` 时返回 skip
+- [ ] 未配置 `json_schema` 时返回 skip
+- [ ] CLI 对 structured output 执行 schema check
 - [ ] pytest 全部通过
 - [ ] CLI 手动验证通过
+- [ ] 提交并合并到 main
 
-## 本阶段学习点
+当前学习点：
 
-- OpenAI-compatible response 的嵌套结构
-- `choices[0]` 的含义
-- `message.role` 与 `message.content`
-- parser 和 CLI 的职责分离
-- 自定义异常
-- 解析结果对象
-- fail fast 思想
-- 正常路径测试和异常路径测试
-
-## 当前注意事项
-
-阶段 C 只解析普通非流式 assistant content response。
-
-以下能力暂时不做：
-
-- tool_calls 解析
-- streaming chunk 解析
-- structured output / JSON Schema 校验
-- 多个 choices 的对比分析
-
-这些能力会在后续阶段继续扩展。
+- parser 和 analyzer/checker 的职责区别
+- JSON 解析和 JSON Schema 校验的区别
+- pass / fail / skip 三种结果
+- 如何设计 failure reason
+- 为什么 analyzer 不应该直接处理 raw response
 
 ---
 
-# 阶段 B-2：Runner、Tool Call Mock 与 Streaming Mock
+## 当前整体主链路
 
-## 当前状态
+### 普通文本 case
 
-进行中，待验证。
+`basic_chat.yaml`
+→ `load_case()`
+→ `InferCase`
+→ `runner.run_case()`
+→ `MockOpenAIClient.run_case()`
+→ raw chat completion response
+→ `parse_chat_completion_response()`
+→ `ParsedAssistantMessage`
+→ CLI 输出
 
-## 本阶段归属
+### Tool calling case
 
-本阶段仍然属于阶段 B：Mock Backend 与最小闭环。
+`tool_call_weather.yaml`
+→ `load_case()`
+→ `InferCase`
+→ `runner.run_case()`
+→ `MockOpenAIClient.run_case()`
+→ raw tool call response
+→ `parse_tool_call_response()`
+→ `ParsedToolCallMessage`
+→ CLI 输出
 
-它不是阶段 C，也不是阶段 D。
-
-## 本阶段目标
-
-补齐阶段 B 里尚未完成的最小闭环能力：
-
-YAML case → InferCase → runner → MockOpenAIClient → raw response / streaming chunks → RunResult
-
----
-
-# 阶段 C-2：Stream Parser
-
-## 当前状态
-
-进行中，待验证。
-
-## 本阶段归属
-
-本阶段属于阶段 C：Parser 与 Checker。
-
-## 本阶段目标
-
-把 OpenAI-compatible streaming chunks 解析成结构化的 `ParsedStreamMessage`。
-
-当前链路：
+### Streaming structured output case
 
 `streaming_json.yaml`
 → `load_case()`
@@ -551,86 +394,101 @@ YAML case → InferCase → runner → MockOpenAIClient → raw response / strea
 → `MockOpenAIClient.stream_case()`
 → raw streaming chunks
 → `parse_streaming_chunks()`
-→ `ParsedStreamMessage`
-
-## 新增文件
-
-- `src/infermatrix/parsers/stream_parser.py`
-- `tests/test_stream_parser.py`
-
-## 修改文件
-
-- `src/infermatrix/parsers/__init__.py`
-- `src/infermatrix/cli.py`
-- `PROGRESS.md`
-
-## 已实现能力
-
-- [ ] 定义 `StreamParseError`
-- [ ] 定义 `ParsedStreamMessage`
-- [ ] 实现 `parse_streaming_chunks()`
-- [ ] 支持收集 `delta.role`
-- [ ] 支持收集多个 `delta.content`
-- [ ] 支持合并 `merged_content`
-- [ ] 支持提取 `finish_reason`
-- [ ] 缺少 choices 时能明确失败
-- [ ] delta 非法时能明确失败
-- [ ] 缺少 assistant role 时能明确失败
-- [ ] 缺少 content chunk 时能明确失败
-- [ ] 缺少 finish_reason 时能明确失败
-- [ ] CLI 对 streaming case 使用 stream parser
-- [ ] pytest 全部通过
-- [ ] CLI 手动验证通过
-
-## 当前限制
-
-阶段 C-2 只处理普通文本 streaming chunks。
-
-暂不处理：
-
-- streaming tool calls
-- structured output JSON 解析
-- JSON Schema 校验
-- analyzer/checker
-- Markdown / JSONL report
+→ `ParsedStreamMessage.merged_content`
+→ `parse_structured_output_text()`
+→ `ParsedStructuredOutput.data`
+→ `check_json_schema()`
+→ `SchemaCheckResult`
+→ CLI 输出
 
 ---
 
-# 下一次进度更新模板
+## 当前关键边界
 
-````markdown
-## 进度记录：阶段 B - Mock Backend
+### `cases.py`
 
-### 日期
+负责：
 
-待填写
+- 读取 YAML case
+- 校验 case schema
+- 生成 `InferCase`
 
-### 本次完成
+不负责：
 
-- 
+- 调用 backend
+- 解析 response
+- 判断结果
 
-### 本次遇到的问题
+### `runner.py`
 
-- 
+负责：
 
-### 本次学到的概念
+- 根据 case 选择 backend client
+- 执行 case
+- 返回 `RunResult`
 
-- 
+不负责：
 
-### 已验证命令
+- 解析 response
+- 校验 expected
+- 输出 report
 
-```bash
-pytest
-infermatrix run examples/basic_chat.yaml
-````
+### `clients/`
 
-### 当前阻塞
+负责：
 
-*
+- 和 backend 打交道
+- 当前 mock client 生成稳定响应
 
-### 下一步
+不负责：
 
-*
+- 判断响应是否正确
+- 解析响应结构
 
-```
-```
+### `parsers/`
+
+负责：
+
+- raw response / chunks / text → structured parsed object
+
+不负责：
+
+- 判断是否符合 expected
+- 生成报告
+
+### `analyzers/`
+
+负责：
+
+- parsed object + expected → pass / fail / skip
+
+不负责：
+
+- 调用 backend
+- 解析 raw response
+- 输出正式报告
+
+### `reports/`
+
+后续负责：
+
+- Markdown report
+- JSONL report
+- run metadata
+- 可复现输出
+
+当前尚未开始。
+
+---
+
+## 下一步
+
+完成阶段 C-4：Schema Checker / Analyzer。
+
+完成后进入：
+
+阶段 C-5：Tool Call Analyzer / Tool Arguments Schema Checker
+
+之后进入：
+
+阶段 D：报告系统与可复现输出
