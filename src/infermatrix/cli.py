@@ -15,9 +15,11 @@ import typer
 from rich.console import Console
 
 from infermatrix.cases import load_case
-from infermatrix.parsers.chat_completion import (
-    ChatCompletionParseError,
+from infermatrix.parsers import (
     parse_chat_completion_response,
+    ChatCompletionParseError,
+    ToolCallParseError,
+    parse_tool_call_response,
 )
 from infermatrix.runner import UnsupportedBackendError, run_case
 
@@ -89,14 +91,24 @@ def run(case_file: Path) -> None:
         raise typer.Exit(code=1)
 
     if case.features.tool_calling:
-        message = result.response["choices"][0]["message"]
-        tool_calls = message.get("tool_calls", [])
-        console.print(f"Tool calls: {len(tool_calls)}")
+        try:
+            parsed = parse_tool_call_response(result.response)
+        except ToolCallParseError as error:
+            console.print(f"[bold red]Failed to parse tool call response:[/bold red] {error}")
+            raise typer.Exit(code=1) from error
 
-        if tool_calls:
-            function = tool_calls[0]["function"]
-            console.print(f"First tool name: {function['name']}")
-            console.print(f"First tool arguments: {function['arguments']}")
+        console.print("[bold blue]Parsed tool call response[/bold blue]")
+        console.print(f"Role: {parsed.role}")
+        console.print(f"Finish reason: {parsed.finish_reason}")
+        console.print(f"Tool calls: {len(parsed.tool_calls)}")
+
+        for index, tool_call in enumerate(parsed.tool_calls):
+            console.print(f"Tool call #{index}")
+            console.print(f"  ID: {tool_call.id}")
+            console.print(f"  Type: {tool_call.type}")
+            console.print(f"  Name: {tool_call.name}")
+            console.print(f"  Raw arguments: {tool_call.raw_arguments}")
+            console.print(f"  Parsed arguments: {tool_call.arguments}")
 
         return
 
