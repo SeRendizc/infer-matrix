@@ -3,9 +3,13 @@
 from infermatrix.parsers.chat_completion import (
     ChatCompletionParseError,
     ParsedAssistantMessage,
-    parse_chat_completion_response
+    parse_chat_completion_response,
 )
-
+from infermatrix.parsers.stream_parser import (
+    ParsedStreamMessage,
+    StreamParseError,
+    parse_streaming_chunks,
+)
 from infermatrix.parsers.tool_call_parser import (
     ParsedToolCall,
     ParsedToolCallMessage,
@@ -17,10 +21,11 @@ __all__ = [
     "ChatCompletionParseError",
     "ParsedAssistantMessage",
     "parse_chat_completion_response",
+    "ParsedStreamMessage",
+    "StreamParseError",
+    "parse_streaming_chunks",
     "ParsedToolCall",
     "ParsedToolCallMessage",
     "ToolCallParseError",
     "parse_tool_call_response",
 ]
-
-# 方便调用（例：from infermatrix.parsers import parse_chat_completion_response）

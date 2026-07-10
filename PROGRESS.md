@@ -528,6 +528,74 @@ YAML case → InferCase → runner → MockOpenAIClient → raw response / strea
 
 ---
 
+# 阶段 C-2：Stream Parser
+
+## 当前状态
+
+进行中，待验证。
+
+## 本阶段归属
+
+本阶段属于阶段 C：Parser 与 Checker。
+
+## 本阶段目标
+
+把 OpenAI-compatible streaming chunks 解析成结构化的 `ParsedStreamMessage`。
+
+当前链路：
+
+`streaming_json.yaml`
+→ `load_case()`
+→ `InferCase`
+→ `runner.run_case()`
+→ `MockOpenAIClient.stream_case()`
+→ raw streaming chunks
+→ `parse_streaming_chunks()`
+→ `ParsedStreamMessage`
+
+## 新增文件
+
+- `src/infermatrix/parsers/stream_parser.py`
+- `tests/test_stream_parser.py`
+
+## 修改文件
+
+- `src/infermatrix/parsers/__init__.py`
+- `src/infermatrix/cli.py`
+- `PROGRESS.md`
+
+## 已实现能力
+
+- [ ] 定义 `StreamParseError`
+- [ ] 定义 `ParsedStreamMessage`
+- [ ] 实现 `parse_streaming_chunks()`
+- [ ] 支持收集 `delta.role`
+- [ ] 支持收集多个 `delta.content`
+- [ ] 支持合并 `merged_content`
+- [ ] 支持提取 `finish_reason`
+- [ ] 缺少 choices 时能明确失败
+- [ ] delta 非法时能明确失败
+- [ ] 缺少 assistant role 时能明确失败
+- [ ] 缺少 content chunk 时能明确失败
+- [ ] 缺少 finish_reason 时能明确失败
+- [ ] CLI 对 streaming case 使用 stream parser
+- [ ] pytest 全部通过
+- [ ] CLI 手动验证通过
+
+## 当前限制
+
+阶段 C-2 只处理普通文本 streaming chunks。
+
+暂不处理：
+
+- streaming tool calls
+- structured output JSON 解析
+- JSON Schema 校验
+- analyzer/checker
+- Markdown / JSONL report
+
+---
+
 # 下一次进度更新模板
 
 ````markdown
