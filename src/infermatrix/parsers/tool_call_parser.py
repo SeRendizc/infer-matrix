@@ -76,7 +76,7 @@ class ParsedToolCall(BaseModel):
     id: str = Field(min_length=1)
     type: Literal["function"] = "function"
     name: str = Field(min_length=1)
-    raw_arguents: str
+    raw_arguments: str
     arguments: dict[str, Any]
 
 
@@ -119,7 +119,7 @@ def parse_tool_call_response(response: dict[str, Any]) -> ParsedToolCallMessage:
         - arguments 解析后必须是 JSON object，也就是 Python dict
     """
 
-    model = _optinal_string(response, "model")
+    model = _optional_string(response, "model")
     choices = _required_list(response, "choices")
 
     if not choices:
@@ -180,3 +180,101 @@ def _parse_single_tool_call(tool_call: Any, index: int) -> ParsedToolCall:
         为了让错误信息更清楚。
         例如 tool_calls[0] 坏了，还是 tool_calls[1] 坏了。
     """
+
+    prefix = f"Response tool_calls[{index}]"
+
+    if not isinstance(tool_call, dict):
+        raise ToolCallParseError(f"{prefix} must be an object.")
+
+    tool_call_id = tool_call.get("id")
+    if not isinstance(tool_call_id, str) or not tool_call_id.strip():
+        raise ToolCallParseError(f"{prefix}.id must be a non-empty string.")
+
+    tool_call_type = tool_call.get("type")
+    if tool_call_type != "function":
+        raise ToolCallParseError(f"{prefix}.type must be 'function'.")
+
+    function = tool_call.get("function")
+    if not isinstance(function, dict):
+        raise ToolCallParseError(f"{prefix}.function must be an object.")
+
+    function_name = function.get("name")
+    if not isinstance(function_name, str) or not function_name.strip():
+        raise ToolCallParseError(f"{prefix}.function.name must be a non-empty string.")
+
+    raw_arguments = function.get("arguments")
+    if not isinstance(raw_arguments, str):
+        raise ToolCallParseError(f"{prefix}.function.arguments must be a string.")
+
+    arguments = _parse_arguments_json(raw_arguments, prefix=prefix)
+
+    return ParsedToolCall(
+        id = tool_call_id,
+        type = "function",
+        name = function_name,
+        raw_arguments = raw_arguments,
+        arguments = arguments,
+    )
+
+
+def _parse_arguments_json(raw_arguments: str, prefix: str) -> dict[str, Any]:
+    """把 function.arguments 从 JSON string 解析成 Python dict。
+
+    Args:
+        raw_arguments: 原始 arguments 字符串。
+        prefix: 错误信息前缀，用来定位是哪一个 tool_call 出错。
+
+    Returns:
+        dict[str, Any]: 解析后的参数对象。
+
+    Raises:
+        ToolCallParseError:
+            - raw_arguments 不是合法 JSON
+            - JSON 解析后不是 object
+
+    为什么要求解析后必须是 dict？
+        对 function calling 来说，arguments 表示函数参数集合。
+        参数集合最自然的结构是 JSON object。
+        例如：
+            {"city": "Shenzhen", "unit": "celsius"}
+
+        如果 arguments 是：
+            ["Shenzhen"]
+        或：
+            "Shenzhen"
+        虽然它们可能是合法 JSON，但不适合作为函数参数对象。
+    """
+
+    try:
+        parsed = json.loads(raw_arguments)
+    except json.JSONDecodeError as error:
+        raise ToolCallParseError(f"{prefix}.function.arguments must be a valid JSON: {error.msg}") from error
+
+    if not isinstance(parsed, dict):
+        raise ToolCallParseError(f"{prefix}.function.arguments must be a JSON object.")
+
+    return parsed
+
+
+def _required_list(data: dict[str, Any], key: str) -> list[Any]:
+    """从 dict 中读取一个必须存在且必须为 list 的字段。"""
+
+    value = data.get(key)
+    if not isinstance(value, list):
+        raise ToolCallParseError(f"Response field '{key}' must be a list.")
+    return value
+
+
+def _optional_string(data: dict[str, Any], key: str) -> str | None:
+    """从 dict 中读取一个可选的字符串字段。
+
+    字段不存在时返回 None。
+    字段存在时必须是字符串。
+    """
+
+    value = data.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise ToolCallParseError(f"Response field '{key}' must be a string.")
+    return value
