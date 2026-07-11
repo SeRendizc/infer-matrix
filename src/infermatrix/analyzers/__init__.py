@@ -1,17 +1,34 @@
 """Analyzers for InferMatrix.
 
-analyzer/checker 负责判断解析后的模型输出是否满足 expected。
+Analyzer / checker 负责判断 parser 输出的结构化对象是否满足 case.expected。
 
-parser 负责“把原始响应变成结构化对象”。
-analyzer 负责“判断结构化对象是否符合预期”。
+职责关系：
+
+    raw response
+        ↓
+    parser
+        ↓
+    parsed object
+        ↓
+    analyzer
+        ↓
+    pass / fail / skip
 """
 
 from infermatrix.analyzers.schema_checker import (
     SchemaCheckResult,
     check_json_schema,
 )
+from infermatrix.analyzers.tool_call_checker import (
+    ToolCallCheckError,
+    ToolCallCheckResult,
+    check_tool_call,
+)
 
 __all__ = [
     "SchemaCheckResult",
     "check_json_schema",
+    "ToolCallCheckError",
+    "ToolCallCheckResult",
+    "check_tool_call",
 ]

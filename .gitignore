@@ -1,5 +1,4 @@
 .PROGRESS
-notepad.txt
 
 # Virtual environments
 .venv/
@@ -32,3 +31,4 @@ build/
 .DS_Store
 Thumbs.db
 uv.lock
+.agents
