@@ -25,7 +25,11 @@ from infermatrix.parsers import (
     StructuredOutputParseError,
     parse_structured_output_text,
 )
-from infermatrix.analyzers.schema_checker import check_json_schema
+from infermatrix.analyzers import (
+    check_json_schema,
+    ToolCallCheckError,
+    check_tool_call,
+)
 from infermatrix.runner import UnsupportedBackendError, run_case
 
 
@@ -76,7 +80,7 @@ def run(case_file: Path) -> None:
     console.print(f"Verdict: {result.verdict}")
     console.print(f"Response type: {result.response_type}")
 
-    if result.response_type == "chat_completion_chunks":
+    if result.response_type == "chat_completion_chunks":  #  STREAMING
         chunks = result.chunks or []
 
         try:
@@ -119,25 +123,27 @@ def run(case_file: Path) -> None:
         console.print("[bold red]No response returned.[/bold red]")
         raise typer.Exit(code=1)
 
-    if case.features.tool_calling:
+    if case.features.tool_calling:  # TOOL CALLING
         try:
             parsed = parse_tool_call_response(result.response)
+            check_results = check_tool_call(
+                case=case,
+                parsed_message=parsed,
+                tool_call_index=0,
+            )
         except ToolCallParseError as error:
             console.print(f"[bold red]Failed to parse tool call response:[/bold red] {error}")
             raise typer.Exit(code=1) from error
 
-        console.print("[bold blue]Parsed tool call response[/bold blue]")
-        console.print(f"Role: {parsed.role}")
-        console.print(f"Finish reason: {parsed.finish_reason}")
-        console.print(f"Tool calls: {len(parsed.tool_calls)}")
+        console.print("[bold blue]Tool call check results[/bold blue]")
 
-        for index, tool_call in enumerate(parsed.tool_calls):
-            console.print(f"Tool call #{index}")
-            console.print(f"  ID: {tool_call.id}")
-            console.print(f"  Type: {tool_call.type}")
-            console.print(f"  Name: {tool_call.name}")
-            console.print(f"  Raw arguments: {tool_call.raw_arguments}")
-            console.print(f"  Parsed arguments: {tool_call.arguments}")
+        for check_result in check_results:
+            console.print(f"Check: {check_result.name}")
+            console.print(f"  Status: {check_result.status}")
+            console.print(f"  Reason: {check_result.reason}")
+
+        if any(check_result.failed for check_result in check_results):
+            raise typer.Exit(code=1)
 
         return
 
@@ -152,7 +158,7 @@ def run(case_file: Path) -> None:
     console.print(f"Finish reason: {parsed.finish_reason}")
     console.print(f"Content: {parsed.content}")
 
-    if case.features.structured_output:
+    if case.features.structured_output:  # ORDINARY MESSAGE
         try:
             structured_output = parse_structured_output_text(parsed.content)
         except StructuredOutputParseError as error:

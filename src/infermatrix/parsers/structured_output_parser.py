@@ -122,9 +122,7 @@ def parse_structured_output_text(raw_text: str) -> ParsedStructuredOutput:
         ) from error
 
     if not isinstance(parsed, dict):
-        raise StructuredOutputParseError(
-            "Structured output text must decode to a JSON object."
-        )
+        raise StructuredOutputParseError("Structured output text must decode to a JSON object.")
 
     return ParsedStructuredOutput(
         raw_text=raw_text,
