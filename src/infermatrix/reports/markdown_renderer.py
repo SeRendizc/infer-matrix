@@ -213,17 +213,29 @@ def _render_parsed_output(
 
 
 def _render_raw_output(
-    raw_output: dict[str, Any] | list[dict[str, Any]],
+    raw_output: (
+        dict[str, Any]
+        | list[dict[str, Any]]
+        | None
+    ),
 ) -> str:
-    """渲染 Backend 原始输出。"""
+    """渲染 Backend 原始输出。
 
-    return "\n".join(
-        [
-            "## Raw Output",
-            "",
-            _render_json_code_block(raw_output),
-        ]
-    )
+    Runner 在产生响应前失败时，raw_output 可能为 None。
+    """
+
+    lines = [
+        "## Raw Output",
+        "",
+    ]
+
+    if raw_output is None:
+        lines.append("No raw output was recorded.")
+        return "\n".join(lines)
+
+    lines.append(_render_json_code_block(raw_output))
+
+    return "\n".join(lines)
 
 
 def _render_reproduction(command: str) -> str:

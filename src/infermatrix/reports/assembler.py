@@ -153,6 +153,79 @@ def assemble_run_report(
     )
 
 
+def assemble_failure_report(
+    *,
+    case: InferCase,
+    case_file: str | Path,
+    stage: str,
+    reason: str,
+    response_type: str,
+    raw_output: (
+        dict[str, Any]
+        | list[dict[str, Any]]
+        | None
+    ) = None,
+    details: dict[str, Any] | None = None,
+) -> RunReport:
+    """为执行、解析或分析阶段的异常构造失败报告。
+
+    Args:
+        case:
+            已成功加载的 InferCase。
+
+        case_file:
+            Case YAML 文件路径。
+
+        stage:
+            失败阶段，例如：
+            - execution
+            - parsing
+            - analysis
+
+        reason:
+            人类可读的失败原因。
+
+        response_type:
+            当前响应类型。Runner 尚未产生响应时，
+            可以使用 execution_error。
+
+        raw_output:
+            已经获得的原始响应。
+
+            Parser 失败时通常存在 Raw Output；
+            Runner 提前失败时通常为 None。
+
+        details:
+            错误类型、Parser 名称等补充信息。
+    """
+
+    failure_check = ReportCheck(
+        name=stage,
+        status="fail",
+        reason=reason,
+        details=details or {},
+    )
+
+    return build_run_report(
+        case_id=case.case_id,
+        case_file=str(case_file),
+        backend=case.backend,
+        model=case.model,
+        features=case.features.model_dump(
+            mode="json"
+        ),
+        response_type=response_type,
+        raw_output=raw_output,
+        parsed_output=None,
+        checks=[
+            failure_check,
+        ],
+        reproduction_command=_build_reproduction_command(
+            case_file
+        ),
+    )
+
+
 def _validate_run_matches_case(
     *,
     case: InferCase,

@@ -2,7 +2,11 @@
 
 from infermatrix.reports.assembler import (
     ReportAssemblyError,
+    assemble_failure_report,
     assemble_run_report,
+)
+from infermatrix.reports.bundle_writer import (
+    write_report_bundle,
 )
 from infermatrix.reports.errors import (
     ReportWriteError,
@@ -28,8 +32,10 @@ __all__ = [
     "build_run_report",
     "ReportAssemblyError",
     "assemble_run_report",
+    "assemble_failure_report",
     "ReportWriteError",
     "render_markdown_report",
     "write_markdown_report",
     "write_jsonl_report",
+    "write_report_bundle",
 ]

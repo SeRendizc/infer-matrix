@@ -716,59 +716,46 @@ CLI 只负责：
 
 ### 阶段 D：报告系统与可复现输出
 
-状态：主体链路已完成，正在补充错误报告。
+状态：已完成。
 
-已完成：
+已实现：
 
-- [x] 统一 `RunReport` 数据模型
-- [x] 使用 `ReportCheck` 统一检查结果
-- [x] 自动生成唯一 `run_id`
-- [x] 根据检查结果计算 Verdict
-- [x] Markdown Report Renderer
-- [x] Markdown Report Writer
-- [x] JSONL Report Writer
-- [x] `assemble_run_report()`
-- [x] Parser 输出自动转换
-- [x] Analyzer 结果自动转换
-- [x] CLI 自动生成 Markdown Report
-- [x] CLI 自动追加 JSONL Record
-- [x] 支持 `--report-dir`
-- [x] Analyzer 失败时先写报告再退出
-- [x] Tool Call 报告
-- [x] Streaming Structured Output 报告
-- [x] CLI End-to-End 报告测试
+- [x] 统一 `RunReport`
+- [x] 唯一 `run_id`
+- [x] Markdown Renderer
+- [x] Markdown Writer
+- [x] JSONL Writer
+- [x] Report Assembler
+- [x] Report Bundle Writer
+- [x] End-to-End Pipeline
+- [x] CLI 自动生成报告
+- [x] 自定义 `--report-dir`
+- [x] Analyzer 失败报告
+- [x] Parser 失败报告
+- [x] Runner 失败报告
+- [x] UTF-8 与中文支持
+- [x] 防止 Markdown 意外覆盖
+- [x] JSONL 追加写入
+- [x] Pipeline 与 CLI End-to-End 测试
 
-待完成：
-
-- [ ] Parser 失败报告
-- [ ] Runner 失败报告
-- [ ] Report 写入部分失败的处理
-- [ ] 一份可提交仓库的示例报告
-- [ ] 报告格式文档
-
-当前完整链路：
+完整链路：
 
 ```text
 YAML Case
     ↓
 InferCase
     ↓
-Runner
-    ↓
-Raw Response / Chunks
-    ↓
-Parser
-    ↓
-Analyzer
-    ↓
-assemble_run_report()
+Pipeline
+    ├── Runner
+    ├── Parser
+    └── Analyzer
     ↓
 RunReport
     ├── runs/<run_id>.md
     └── runs/runs.jsonl
 ```
 
----
+---                                                                                                                                                                                                                                         
 
 ### 阶段 E：真实 OpenAI-compatible Endpoint
 

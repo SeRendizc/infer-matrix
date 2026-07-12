@@ -102,7 +102,7 @@ class RunReport(BaseModel):
     features: dict[str, bool]
 
     response_type: str = Field(min_length=1)
-    raw_output: dict[str, Any] | list[dict[str, Any]]
+    raw_output: dict[str, Any] | list[dict[str, Any]] | None = None
     parsed_output: dict[str, Any] | None = None
 
     checks: list[ReportCheck] = Field(default_factory=list)
@@ -120,7 +120,7 @@ def build_run_report(
     model: str,
     features: dict[str, bool],
     response_type: str,
-    raw_output: dict[str, Any] | list[dict[str, Any]],
+    raw_output: dict[str, Any] | list[dict[str, Any]] | None,
     parsed_output: dict[str, Any] | None,
     checks: list[ReportCheck],
     reproduction_command: str,
