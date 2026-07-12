@@ -721,30 +721,35 @@ CLI 只负责：
 已完成：
 
 - [x] 统一 `RunReport` 数据模型
-- [x] `ReportCheck` 统一检查结果
+- [x] 使用 `ReportCheck` 统一 Analyzer 结果
 - [x] 自动生成唯一 `run_id`
 - [x] 根据检查结果计算 Verdict
 - [x] Markdown Report Renderer
+- [x] Markdown Report Writer
+- [x] 自动创建报告目录
+- [x] UTF-8 报告写入
+- [x] 默认防止覆盖同名报告
+- [x] 文件名安全检查
 
 进行中：
 
-- [ ] Markdown 文件写入
-- [ ] JSONL Record
-- [ ] CLI 集成
-- [ ] 自动创建 `runs/` 目录
-- [ ] 完整 Case 执行报告
+- [ ] JSONL Record Writer
+- [ ] 将真实 Case 执行结果转换为 `RunReport`
+- [ ] CLI 自动生成报告
+- [ ] 完整 End-to-End 报告测试
 
-计划输出：
+当前报告链路：
 
-- Case 摘要
-- Backend 与 Model 信息
-- Feature 开关
-- Raw Output
-- Parsed Output
-- Analyzer Results
-- Verdict
-- Failure Reasons
-- Reproduction Command
+```text
+RunReport
+    ↓
+render_markdown_report()
+    ↓
+Markdown String
+    ↓
+write_markdown_report()
+    ↓
+runs/<run_id>.md
 ---
 
 ### 阶段 E：真实 OpenAI-compatible Endpoint
