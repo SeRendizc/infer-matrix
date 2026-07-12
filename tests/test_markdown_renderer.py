@@ -206,3 +206,26 @@ def test_render_markdown_report_ends_with_newline() -> None:
     )
 
     assert markdown.endswith("\n")
+
+
+def test_renderer_handles_missing_raw_output() -> None:
+    """Runner 失败报告允许没有 Raw Output。"""
+
+    report = _passing_tool_call_report().model_copy(
+        update={
+            "response_type": "execution_error",
+            "raw_output": None,
+            "verdict": "fail",
+            "failure_reasons": [
+                "Unsupported backend."
+            ],
+        }
+    )
+
+    markdown = render_markdown_report(report)
+
+    assert "## Raw Output" in markdown
+    assert (
+        "No raw output was recorded."
+        in markdown
+    )
