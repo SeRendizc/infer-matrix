@@ -721,41 +721,46 @@ CLI 只负责：
 已完成：
 
 - [x] 统一 `RunReport` 数据模型
-- [x] 使用 `ReportCheck` 统一 Analyzer 结果
+- [x] 使用 `ReportCheck` 统一检查结果
 - [x] 自动生成唯一 `run_id`
 - [x] 根据检查结果计算 Verdict
 - [x] Markdown Report Renderer
 - [x] Markdown Report Writer
-- [x] 自动创建报告目录
-- [x] UTF-8 Markdown 写入
-- [x] 默认防止覆盖同名 Markdown 报告
 - [x] JSONL Report Writer
-- [x] 多次运行记录追加
-- [x] `datetime` JSON 序列化
-- [x] 中文 JSONL 输出
-- [x] 一条运行记录占一行
+- [x] `ReportAssemblyError`
+- [x] `assemble_run_report()`
+- [x] `InferCase` 与 `RunResult` 一致性检查
+- [x] 自动提取 Raw Output
+- [x] Parser Pydantic Model 自动转换
+- [x] Analyzer Result 自动转换成 `ReportCheck`
+- [x] Runner 失败转换成统一执行检查
 
 进行中：
 
-- [ ] 将真实 Case 执行结果转换成 `RunReport`
-- [ ] 将 Parser 输出转换成统一报告数据
-- [ ] 将 Analyzer 结果转换成 `ReportCheck`
-- [ ] CLI 自动生成 Markdown 和 JSONL
-- [ ] 完整 End-to-End 报告测试
+- [ ] CLI 自动生成 Markdown Report
+- [ ] CLI 自动追加 JSONL Record
+- [ ] Parser 异常报告
+- [ ] Analyzer 异常报告
+- [ ] End-to-End CLI 测试
 
-当前报告输出：
+当前报告链路：
 
 ```text
+InferCase
++ RunResult
++ Parsed Output
++ Analyzer Results
+        ↓
+assemble_run_report()
+        ↓
 RunReport
-    ├── render_markdown_report()
-    │       ↓
-    │   write_markdown_report()
-    │       ↓
-    │   runs/<run_id>.md
-    │
-    └── write_jsonl_report()
-            ↓
-        runs/runs.jsonl
+        ├── write_markdown_report()
+        │       ↓
+        │   runs/<run_id>.md
+        │
+        └── write_jsonl_report()
+                ↓
+            runs/runs.jsonl
 ```
 
 ---
