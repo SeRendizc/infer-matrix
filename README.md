@@ -727,29 +727,37 @@ CLI 只负责：
 - [x] Markdown Report Renderer
 - [x] Markdown Report Writer
 - [x] 自动创建报告目录
-- [x] UTF-8 报告写入
-- [x] 默认防止覆盖同名报告
-- [x] 文件名安全检查
+- [x] UTF-8 Markdown 写入
+- [x] 默认防止覆盖同名 Markdown 报告
+- [x] JSONL Report Writer
+- [x] 多次运行记录追加
+- [x] `datetime` JSON 序列化
+- [x] 中文 JSONL 输出
+- [x] 一条运行记录占一行
 
 进行中：
 
-- [ ] JSONL Record Writer
-- [ ] 将真实 Case 执行结果转换为 `RunReport`
-- [ ] CLI 自动生成报告
+- [ ] 将真实 Case 执行结果转换成 `RunReport`
+- [ ] 将 Parser 输出转换成统一报告数据
+- [ ] 将 Analyzer 结果转换成 `ReportCheck`
+- [ ] CLI 自动生成 Markdown 和 JSONL
 - [ ] 完整 End-to-End 报告测试
 
-当前报告链路：
+当前报告输出：
 
 ```text
 RunReport
-    ↓
-render_markdown_report()
-    ↓
-Markdown String
-    ↓
-write_markdown_report()
-    ↓
-runs/<run_id>.md
+    ├── render_markdown_report()
+    │       ↓
+    │   write_markdown_report()
+    │       ↓
+    │   runs/<run_id>.md
+    │
+    └── write_jsonl_report()
+            ↓
+        runs/runs.jsonl
+```
+
 ---
 
 ### 阶段 E：真实 OpenAI-compatible Endpoint
