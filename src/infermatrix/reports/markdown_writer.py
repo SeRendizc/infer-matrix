@@ -37,22 +37,10 @@ from pathlib import Path
 
 from infermatrix.reports.markdown_renderer import render_markdown_report
 from infermatrix.reports.models import RunReport
+from infermatrix.reports.errors import ReportWriteError
 
 
 _SAFE_RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9._-]+$")
-
-
-class ReportWriteError(RuntimeError):
-    """报告无法安全写入文件时抛出。
-
-    常见原因：
-
-    - run_id 不能安全地作为文件名
-    - 输出目录无法创建
-    - 同名报告已经存在
-    - 文件没有写入权限
-    - 其他文件系统错误
-    """
 
 
 def write_markdown_report(
