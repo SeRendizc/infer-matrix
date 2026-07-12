@@ -716,7 +716,7 @@ CLI 只负责：
 
 ### 阶段 D：报告系统与可复现输出
 
-状态：进行中。
+状态：主体链路已完成，正在补充错误报告。
 
 已完成：
 
@@ -727,40 +727,45 @@ CLI 只负责：
 - [x] Markdown Report Renderer
 - [x] Markdown Report Writer
 - [x] JSONL Report Writer
-- [x] `ReportAssemblyError`
 - [x] `assemble_run_report()`
-- [x] `InferCase` 与 `RunResult` 一致性检查
-- [x] 自动提取 Raw Output
-- [x] Parser Pydantic Model 自动转换
-- [x] Analyzer Result 自动转换成 `ReportCheck`
-- [x] Runner 失败转换成统一执行检查
+- [x] Parser 输出自动转换
+- [x] Analyzer 结果自动转换
+- [x] CLI 自动生成 Markdown Report
+- [x] CLI 自动追加 JSONL Record
+- [x] 支持 `--report-dir`
+- [x] Analyzer 失败时先写报告再退出
+- [x] Tool Call 报告
+- [x] Streaming Structured Output 报告
+- [x] CLI End-to-End 报告测试
 
-进行中：
+待完成：
 
-- [ ] CLI 自动生成 Markdown Report
-- [ ] CLI 自动追加 JSONL Record
-- [ ] Parser 异常报告
-- [ ] Analyzer 异常报告
-- [ ] End-to-End CLI 测试
+- [ ] Parser 失败报告
+- [ ] Runner 失败报告
+- [ ] Report 写入部分失败的处理
+- [ ] 一份可提交仓库的示例报告
+- [ ] 报告格式文档
 
-当前报告链路：
+当前完整链路：
 
 ```text
+YAML Case
+    ↓
 InferCase
-+ RunResult
-+ Parsed Output
-+ Analyzer Results
-        ↓
+    ↓
+Runner
+    ↓
+Raw Response / Chunks
+    ↓
+Parser
+    ↓
+Analyzer
+    ↓
 assemble_run_report()
-        ↓
+    ↓
 RunReport
-        ├── write_markdown_report()
-        │       ↓
-        │   runs/<run_id>.md
-        │
-        └── write_jsonl_report()
-                ↓
-            runs/runs.jsonl
+    ├── runs/<run_id>.md
+    └── runs/runs.jsonl
 ```
 
 ---

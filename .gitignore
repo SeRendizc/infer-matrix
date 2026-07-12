@@ -35,3 +35,4 @@ uv.lock
 
 # InferMatrix generated run reports
 runs/
+artifacts/
