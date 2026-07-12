@@ -32,3 +32,6 @@ build/
 Thumbs.db
 uv.lock
 .agents
+
+# InferMatrix generated run reports
+runs/
