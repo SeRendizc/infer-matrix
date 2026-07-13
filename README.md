@@ -757,89 +757,81 @@ RunReport
 
 ---                                                                                                                                                                                                                                         
 
-### 阶段 E：真实 OpenAI-compatible Endpoint
+### 阶段 E：真实 Transport 与 Chat Completions
 
-状态：未开始。
+状态：进行中。
 
-计划包括：
+#### 已完成：E-1A Backend 与 Protocol 配置分离
 
-* 配置 `base_url`
-* 配置 `model`
-* API Key 环境变量
-* Non-streaming 请求
-* Streaming 请求
-* Tool Calling
-* Structured Output
-* Timeout 与基础错误处理
-* Backend Metadata
+* [x] 新增 `BackendConfig`
+* [x] 新增 `ProtocolConfig`
+* [x] Backend Provider 与 API Protocol 独立建模
+* [x] 新增 Connect、Read、Write、Pool 四类 Timeout 配置
+* [x] API Key 配置只保存环境变量名称
+* [x] 迁移现有 Mock YAML Case
+* [x] Runner 使用 `backend.provider`
+* [x] Pipeline 和 Report Assembler 使用 `backend.provider`
+* [x] CLI 分别展示 Backend 与 Protocol
+* [x] 未知 Backend Provider 和 Protocol 在配置层被拒绝
+* [x] 合法但尚未接入的 Backend 由 Runner 明确拒绝
+* [x] 全量测试 103 项通过
+* [x] Ruff 静态检查通过
+* [x] Basic Chat、Tool Calling 和 Streaming CLI 回归通过
 
----
+当前 Case 配置：
 
-### 阶段 F：vLLM / SGLang 行为分析
+```yaml
+backend:
+  provider: mock
 
-状态：未开始。
+protocol:
+  type: chat_completions
 
-计划包括：
+model: mock-model
+```
 
-* 接入 vLLM 或 SGLang
-* 使用相同 Case 对比 Mock 与真实 Backend
-* 分析 Streaming 行为
-* 分析 Tool Calling 行为
-* 分析 Structured Output 行为
-* 学习 Prefill、Decode、KV Cache 与 Continuous Batching
+真实 Endpoint 将使用：
 
----
+```yaml
+backend:
+  provider: openai_compatible
+  base_url: http://127.0.0.1:8000/v1
+  api_key_env: INFERMATRIX_API_KEY
+  timeout:
+    connect: 5.0
+    read: 120.0
+    write: 30.0
+    pool: 5.0
 
-### 阶段 G：上游开源贡献
+protocol:
+  type: chat_completions
+```
 
-状态：未开始。
+#### 当前唯一子阶段：E-1B Raw HTTP Transport
 
-计划包括：
+目标：
 
-* 从 vLLM、SGLang、LiteLLM 等项目中寻找真实 Issue
-* 将 Issue 转换成 InferMatrix Case
-* 生成最小复现报告
-* 提交高质量 Issue
-* 提交 Docs、Example 或 Regression Test PR
+* 引入 HTTPX
+* 定义协议无关的 HTTP Transport 接口
+* 实现同步原始 HTTP 请求
+* 实现 Connect、Read、Write 和 Pool Timeout
+* 分类连接错误、超时、HTTP 状态错误和响应读取错误
+* 捕获原始 Request 与 Response
+* 对 Authorization 等敏感 Header 脱敏
+* 默认不自动重试
+* 使用 `httpx.MockTransport` 完成确定性测试
 
----
+#### 后续计划
 
-### 阶段 H：求职化包装
+1. E-1B：Raw HTTP Transport
+2. E-1C：SSE Wire Decoder
+3. E-1D：Chat Completions Adapter，并将 Protocol 写入正式 RunReport
+4. E-1E：真实 vLLM Smoke Test 与第一份真实 Evidence Bundle
 
-状态：未开始。
+当前不提前实现：
 
-计划包括：
-
-* 项目演示
-* 项目架构说明
-* 简历 Bullet
-* 面试讲解稿
-* 技术博客
-* 上游贡献记录
-
----
-
-## 项目方向
-
-InferMatrix 位于 Agent 应用开发与 LLM Serving Systems 的交叉层。
-
-项目从以下能力开始：
-
-* Tool Calling
-* Structured Output
-* Streaming Response
-* OpenAI-compatible Interface
-
-然后逐步深入：
-
-* 真实 Endpoint
-* vLLM
-* SGLang
-* KV Cache
-* Batching
-* 推理服务行为差异
-* 上游开源贡献
-
-一句话概括：
-
-> InferMatrix 是一个面向 Agentic LLM Systems 的行为分析框架，关注 OpenAI-compatible 大模型推理服务在 Streaming、Structured Output 和 Tool Calling 等功能组合下的响应行为、失败模式与可复现报告。
+* Responses Adapter
+* Semantic Trace
+* Invariant Engine
+* vLLM Cache 实验
+* SGLang 对比

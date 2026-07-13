@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from infermatrix.cases import load_case
+from infermatrix.cases import load_case, BackendConfig
 from infermatrix.pipeline import run_case_pipeline
 from infermatrix.runner import RunResult
 
@@ -90,14 +90,17 @@ def test_pipeline_reports_analyzer_failure() -> None:
 
 
 def test_pipeline_reports_runner_failure() -> None:
-    """不支持的 Backend 应生成 execution FAIL 报告。"""
+    """尚未接入的真实 Backend 应生成 execution FAIL 报告。"""
 
     case_file = Path("examples/basic_chat.yaml")
     case = load_case(case_file)
 
     unsupported_case = case.model_copy(
         update={
-            "backend": "unsupported",
+            "backend": BackendConfig(
+                provider="openai_compatible",
+                base_url="http://127.0.0.1:8000/v1",
+            ),
         }
     )
 
@@ -117,6 +120,11 @@ def test_pipeline_reports_runner_failure() -> None:
         "execution"
     )
 
+    assert (
+        result.report.backend
+        == "openai_compatible"
+    )
+
 
 def test_pipeline_reports_parser_failure(
     monkeypatch,
@@ -129,7 +137,7 @@ def test_pipeline_reports_parser_failure(
     def fake_run_case(_case):
         return RunResult(
             case_id=_case.case_id,
-            backend=_case.backend,
+            backend=_case.backend.provider,
             model=_case.model,
             response_type="chat_completion",
             verdict="completed",

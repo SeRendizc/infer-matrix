@@ -16,24 +16,7 @@ import typer
 from pydantic import BaseModel
 from rich.console import Console
 
-from infermatrix.analyzers import (
-    check_json_schema,
-    check_tool_call,
-)
-from infermatrix.analyzers.tool_call_checker import (
-    ToolCallCheckError,
-)
 from infermatrix.cases import InferCase, load_case
-from infermatrix.parsers import (
-    ChatCompletionParseError,
-    StreamParseError,
-    StructuredOutputParseError,
-    ToolCallParseError,
-    parse_chat_completion_response,
-    parse_streaming_chunks,
-    parse_structured_output_text,
-    parse_tool_call_response,
-)
 from infermatrix.reports import (
     ReportAssemblyError,
     ReportWriteError,
@@ -45,8 +28,6 @@ from infermatrix.reports import (
 )
 from infermatrix.runner import (
     RunResult,
-    UnsupportedBackendError,
-    run_case,
 )
 from infermatrix.pipeline import run_case_pipeline
 
@@ -148,7 +129,8 @@ def run(
         "[bold green]InferMatrix case loaded[/bold green]"
     )
     console.print(f"Case ID: {case.case_id}")
-    console.print(f"Backend: {case.backend}")
+    console.print(f"Backend: {case.backend.provider}")
+    console.print(f"Protocol: {case.protocol.type}")
     console.print(f"Model: {case.model}")
 
     pipeline_result = run_case_pipeline(

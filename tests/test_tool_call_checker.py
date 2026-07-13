@@ -5,7 +5,6 @@ from infermatrix.cases import CaseExpected, load_case
 from infermatrix.clients.mock_openai import MockOpenAIClient
 from infermatrix.parsers.tool_call_parser import (
     ParsedToolCall,
-    ParsedToolCallMessage,
     parse_tool_call_response,
 )
 

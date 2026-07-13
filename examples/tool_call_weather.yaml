@@ -1,5 +1,11 @@
 case_id: tool_call_weather_001
-backend: mock
+
+backend:
+  provider: mock
+
+protocol:
+  type: chat_completions
+
 model: mock-model
 
 features:

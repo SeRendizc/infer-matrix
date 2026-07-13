@@ -70,9 +70,11 @@ def run_case(case: InferCase) -> RunResult:
         UnsupportedBackendError: 当前 backend 不支持。
     """
 
-    if case.backend != "mock":
+    provider = case.backend.provider
+
+    if provider != "mock":
         raise UnsupportedBackendError(
-            f"Unsupported backend in Phase B-2 runner: {case.backend}"
+            "Unsupported backend provider in the current runner: " f"{provider}"
         )
 
     client = MockOpenAIClient()
@@ -81,7 +83,7 @@ def run_case(case: InferCase) -> RunResult:
         chunks = client.stream_case(case)
         return RunResult(
             case_id=case.case_id,
-            backend=case.backend,
+            backend=case.backend.provider,
             model=case.model,
             response_type="chat_completion_chunks",
             verdict="completed",
@@ -91,7 +93,7 @@ def run_case(case: InferCase) -> RunResult:
     response = client.run_case(case)
     return RunResult(
         case_id=case.case_id,
-        backend=case.backend,
+        backend=case.backend.provider,
         model=case.model,
         response_type="chat_completion",
         verdict="completed",

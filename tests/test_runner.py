@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from infermatrix.cases import load_case
+from infermatrix.cases import load_case, BackendConfig
 from infermatrix.runner import UnsupportedBackendError, run_case, run_case_file
 
 
@@ -83,10 +83,21 @@ def test_runner_executes_streaming_case() -> None:
 
 
 def test_runner_rejects_unsupported_backend() -> None:
-    """runner 遇到不支持的 backend 时应该明确失败。"""
+    """当前 Runner 遇到尚未接入的真实 Backend 时应该明确失败。"""
 
     case = load_case("examples/basic_chat.yaml")
-    unsupported_case = case.model_copy(update={"backend": "unknown"})
 
-    with pytest.raises(UnsupportedBackendError, match="Unsupported backend"):
+    unsupported_case = case.model_copy(
+        update={
+            "backend": BackendConfig(
+                provider="openai_compatible",
+                base_url="http://127.0.0.1:8000/v1",
+            ),
+        }
+    )
+
+    with pytest.raises(
+        UnsupportedBackendError,
+        match="Unsupported backend",
+    ):
         run_case(unsupported_case)
