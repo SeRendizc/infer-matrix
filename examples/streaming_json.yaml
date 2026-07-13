@@ -1,5 +1,11 @@
 case_id: streaming_json_001
-backend: mock
+
+backend:
+  provider: mock
+
+protocol:
+  type: chat_completions
+
 model: mock-model
 
 features:

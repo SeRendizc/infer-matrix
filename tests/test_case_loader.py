@@ -16,7 +16,7 @@ def test_load_basic_chat_case() -> None:
 
     # Assert: check that fields are parsed as expected.
     assert case.case_id == "basic_chat_001"
-    assert case.backend == "mock"
+    assert case.backend.provider == "mock"
     assert case.model == "mock-model"
 
     assert case.features.streaming is False

@@ -16,7 +16,13 @@ from pathlib import Path
 from typing import Any, Literal
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import (
+    AnyHttpUrl,
+    BaseModel,
+    ConfigDict,
+    Field,
+    model_validator,
+)
 
 
 class Message(BaseModel):
@@ -30,6 +36,100 @@ class Message(BaseModel):
 
     role: Literal["system", "user", "assistant", "tool"]
     content: str
+
+
+class TimeoutConfig(BaseModel):
+    """真实 Backend 的 HTTP Timeout 配置。
+
+    HTTPX 将 Timeout 分成四类：
+
+    - connect：建立连接允许等待的时间
+    - read：等待响应数据允许的时间
+    - write：发送请求数据允许的时间
+    - pool：等待连接池可用连接的时间
+
+    模型推理可能耗时较长，因此 read 默认明显高于 connect。
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    connect: float = Field(default=5.0, gt=0)
+    read: float = Field(default=120.0, gt=0)
+    write: float = Field(default=30.0, gt=0)
+    pool: float = Field(default=5.0, gt=0)
+
+
+class BackendConfig(BaseModel):
+    """InferMatrix 使用的 Backend 配置。
+
+    provider 表示服务提供方式，而不是 API 协议。
+
+    当前支持：
+
+    - mock：进程内 Mock Backend
+    - openai_compatible：真实 OpenAI-compatible HTTP 服务
+
+    API Key 不直接写入 YAML，只保存环境变量名称。
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    provider: Literal[
+        "mock",
+        "openai_compatible",
+    ] = "mock"
+
+    base_url: AnyHttpUrl | None = None
+    api_key_env: str | None = None
+
+    timeout: TimeoutConfig = Field(
+        default_factory=TimeoutConfig
+    )
+
+    @model_validator(mode="after")
+    def validate_provider_configuration(
+        self,
+    ) -> "BackendConfig":
+        """校验不同 Provider 所需的配置。"""
+
+        if (
+            self.provider == "openai_compatible"
+            and self.base_url is None
+        ):
+            raise ValueError(
+                "backend.base_url is required when "
+                "backend.provider is 'openai_compatible'."
+            )
+
+        if self.provider == "mock":
+            if self.base_url is not None:
+                raise ValueError(
+                    "backend.base_url must not be configured "
+                    "for the in-process mock backend."
+                )
+
+            if self.api_key_env is not None:
+                raise ValueError(
+                    "backend.api_key_env must not be configured "
+                    "for the in-process mock backend."
+                )
+
+        return self
+
+
+class ProtocolConfig(BaseModel):
+    """InferMatrix 与 Backend 交互时使用的 API 协议。
+
+    同一个 Backend 可能同时支持多种协议，因此 Protocol
+    必须与 Backend 分开建模。
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal[
+        "chat_completions",
+        "responses",
+    ] = "chat_completions"
 
 
 class CaseFeatures(BaseModel):
@@ -84,10 +184,18 @@ class InferCase(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     case_id: str = Field(min_length=1)
-    backend: str = Field(default="mock")
-    model: str = Field(default="mock-model")
+
+    backend: BackendConfig = Field(default_factory=BackendConfig)
+
+    protocol: ProtocolConfig = Field(default_factory=ProtocolConfig)
+
+    model: str = Field(
+        default="mock-model",
+        min_length=1,
+    )
+
     features: CaseFeatures = Field(default_factory=CaseFeatures)
-    messages: list[Message]
+    messages: list[Message] = Field(default_factory=list)
     tools: list[dict[str, Any]] = Field(default_factory=list)
     expected: CaseExpected = Field(default_factory=CaseExpected)
     metadata: dict[str, Any] = Field(default_factory=dict)

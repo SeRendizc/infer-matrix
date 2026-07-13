@@ -184,7 +184,7 @@ def test_assembler_rejects_mismatched_case_id() -> None:
 
     wrong_run_result = RunResult(
         case_id="different_case",
-        backend=case.backend,
+        backend=case.backend.provider,
         model=case.model,
         response_type="chat_completion",
         verdict="completed",
@@ -214,7 +214,7 @@ def test_assembler_rejects_missing_response() -> None:
 
     broken_run_result = RunResult(
         case_id=case.case_id,
-        backend=case.backend,
+        backend=case.backend.provider,
         model=case.model,
         response_type="chat_completion",
         verdict="completed",
@@ -242,7 +242,7 @@ def test_failed_run_becomes_failed_report() -> None:
 
     failed_run_result = RunResult(
         case_id=case.case_id,
-        backend=case.backend,
+        backend=case.backend.provider,
         model=case.model,
         response_type="chat_completion",
         verdict="failed",

@@ -138,7 +138,7 @@ def assemble_run_report(
     return build_run_report(
         case_id=case.case_id,
         case_file=str(case_file),
-        backend=case.backend,
+        backend=case.backend.provider,
         model=case.model,
         features=case.features.model_dump(
             mode="json"
@@ -209,7 +209,7 @@ def assemble_failure_report(
     return build_run_report(
         case_id=case.case_id,
         case_file=str(case_file),
-        backend=case.backend,
+        backend=case.backend.provider,
         model=case.model,
         features=case.features.model_dump(
             mode="json"
@@ -250,10 +250,10 @@ def _validate_run_matches_case(
             f"{run_result.case_id!r} != {case.case_id!r}."
         )
 
-    if run_result.backend != case.backend:
+    if run_result.backend != case.backend.provider:
         raise ReportAssemblyError(
             "RunResult backend does not match InferCase: "
-            f"{run_result.backend!r} != {case.backend!r}."
+            f"{run_result.backend!r} != {case.backend.provider!r}."
         )
 
     if run_result.model != case.model:
