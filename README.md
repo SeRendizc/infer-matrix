@@ -768,79 +768,87 @@ RunReport
 * [x] Backend Provider 与 API Protocol 独立建模
 * [x] `BackendConfig`
 * [x] `ProtocolConfig`
-* [x] Connect、Read、Write、Pool Timeout 配置
-* [x] 迁移现有 Mock Case
-* [x] Runner、Pipeline、Report 和 CLI 适配
-* [x] 配置与回归测试通过
+* [x] 四类 HTTP Timeout 配置
+* [x] Mock Case、Runner、Pipeline、Report 和 CLI 适配
+* [x] 配置和回归测试通过
 
 ##### E-1B：Raw HTTP Transport
 
-* [x] 引入 HTTPX
-* [x] 定义同步 `SyncHttpTransport` 接口
-* [x] 定义异步 `AsyncHttpTransport` 接口
-* [x] 实现连接池复用的 `HttpxTransport`
-* [x] 实现连接池复用的 `AsyncHttpxTransport`
-* [x] 映射四类 HTTP Timeout
-* [x] 分类网络、协议、代理和请求错误
-* [x] 捕获原始 Request 和 Response
+* [x] 同步与异步 HTTPX Transport
+* [x] 原始 Request / Response 捕获
 * [x] UTF-8 与 Base64 Body 无损保存
-* [x] 保留重复 Header
-* [x] 脱敏 Authorization、Cookie、API Key 和 URL Query
-* [x] 保留 4xx/5xx 原始响应
-* [x] 提供显式 `require_success()`
+* [x] Connect、Read、Write、Pool Timeout
+* [x] 网络和 HTTP Protocol 错误分类
+* [x] Header 与 URL Query 脱敏
+* [x] 保留非 2xx 响应
+* [x] 显式成功状态策略
 * [x] 默认关闭自动重试
-* [x] 使用 `httpx.MockTransport` 完成同步与异步测试
-* [x] 全量测试通过：请填写本次终端实际数量
-* [x] Ruff 静态检查通过
+* [x] 全量测试与 Ruff 通过
 
-当前分层：
+##### E-1C：SSE Wire Decoder
+
+* [x] 增量 UTF-8 解码
+* [x] 支持流开头 UTF-8 BOM
+* [x] 支持任意 Byte Chunk 边界
+* [x] 支持 CRLF、LF 和 CR
+* [x] 支持 `event`、`data`、`id` 和 `retry`
+* [x] 支持多行 Data 拼接
+* [x] 保留注释和未知字段
+* [x] 保留每个 SSE Frame 原始文本
+* [x] 维护 Last Event ID
+* [x] 维护 Reconnection Time
+* [x] 识别但不消费 `[DONE]`
+* [x] 检测非法 UTF-8
+* [x] 检测未完整终止的 Frame
+* [x] 支持严格和标准 EOF 行为
+* [x] 专项测试通过：请填写实际数量
+* [x] 全量测试通过：请填写实际数量
+* [x] Ruff 静态检查通过
+* [x] 手动跨 Chunk 验证通过
+
+当前 Wire 链路：
 
 ```text
-BackendConfig
+Raw HTTP bytes
     ↓
-Protocol Adapter
+SseDecoder
     ↓
-Sync / Async HTTP Transport
-    ↓
-HTTPX
+SseFrame
+    ├── raw_text
+    ├── fields
+    ├── comments
+    ├── retry
+    └── SseEvent
 ```
 
-Raw Transport 当前只理解：
+SSE Decoder 当前不理解：
 
-* HTTP Method
-* URL
-* Header
-* Body
-* Status
-* Timeout
-* Network Error
-* Protocol Error
-
-Raw Transport不理解：
-
-* Chat Completion
-* Responses Item
-* Tool Call
+* Chat Completion Chunk
+* Responses Event Type
+* Tool Call Delta
 * Structured Output
-* SSE Event
+* JSON Payload
 
-#### 当前唯一子阶段：E-1C SSE Wire Decoder
+#### 当前唯一子阶段：E-1D Chat Completions Adapter
+
+E-1D 分为两个内部步骤：
+
+1. E-1D1：Non-streaming Request / Response Adapter
+2. E-1D2：Streaming HTTP Integration 与 Chunk Adapter
 
 目标：
 
-* 解析 `event:` 和 `data:` 字段
-* 支持多行 Data
-* 支持空行结束一个 Event
-* 支持注释行
-* 支持 `[DONE]`
-* 保留原始 SSE Frame
-* 检测不完整 Frame
-* 检测连接结束前未完成事件
-* 不提前解析 Chat Completions 或 Responses 语义
+* 将 `InferCase` 转换成 Chat Completions Request
+* 解析 Non-streaming HTTP JSON Response
+* 检查协议对象类型和必需字段
+* 将 SSE Event Data 解析成 Chat Completion Chunk
+* 将 `[DONE]` 交给协议层处理
+* 保留 Raw HTTP Exchange 和 Raw SSE Frames
+* 将 Protocol 写入正式 RunReport
 
 #### 后续计划
 
-1. E-1C：SSE Wire Decoder
-2. E-1D：Chat Completions Request/Response Adapter
-3. E-1E：真实 vLLM Smoke Test 与 Evidence Bundle
+1. E-1D1：Chat Completions Non-streaming Adapter
+2. E-1D2：HTTP Streaming 与 Chat Chunk Adapter
+3. E-1E：真实 vLLM Smoke Test 和 Evidence Bundle
 4. F：Responses / Open Responses Adapter
