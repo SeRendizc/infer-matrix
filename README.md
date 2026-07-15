@@ -761,77 +761,86 @@ RunReport
 
 状态：进行中。
 
-#### 已完成：E-1A Backend 与 Protocol 配置分离
+#### 已完成
 
-* [x] 新增 `BackendConfig`
-* [x] 新增 `ProtocolConfig`
+##### E-1A：Backend 与 Protocol 配置分离
+
 * [x] Backend Provider 与 API Protocol 独立建模
-* [x] 新增 Connect、Read、Write、Pool 四类 Timeout 配置
-* [x] API Key 配置只保存环境变量名称
-* [x] 迁移现有 Mock YAML Case
-* [x] Runner 使用 `backend.provider`
-* [x] Pipeline 和 Report Assembler 使用 `backend.provider`
-* [x] CLI 分别展示 Backend 与 Protocol
-* [x] 未知 Backend Provider 和 Protocol 在配置层被拒绝
-* [x] 合法但尚未接入的 Backend 由 Runner 明确拒绝
-* [x] 全量测试 103 项通过
+* [x] `BackendConfig`
+* [x] `ProtocolConfig`
+* [x] Connect、Read、Write、Pool Timeout 配置
+* [x] 迁移现有 Mock Case
+* [x] Runner、Pipeline、Report 和 CLI 适配
+* [x] 配置与回归测试通过
+
+##### E-1B：Raw HTTP Transport
+
+* [x] 引入 HTTPX
+* [x] 定义同步 `SyncHttpTransport` 接口
+* [x] 定义异步 `AsyncHttpTransport` 接口
+* [x] 实现连接池复用的 `HttpxTransport`
+* [x] 实现连接池复用的 `AsyncHttpxTransport`
+* [x] 映射四类 HTTP Timeout
+* [x] 分类网络、协议、代理和请求错误
+* [x] 捕获原始 Request 和 Response
+* [x] UTF-8 与 Base64 Body 无损保存
+* [x] 保留重复 Header
+* [x] 脱敏 Authorization、Cookie、API Key 和 URL Query
+* [x] 保留 4xx/5xx 原始响应
+* [x] 提供显式 `require_success()`
+* [x] 默认关闭自动重试
+* [x] 使用 `httpx.MockTransport` 完成同步与异步测试
+* [x] 全量测试通过：请填写本次终端实际数量
 * [x] Ruff 静态检查通过
-* [x] Basic Chat、Tool Calling 和 Streaming CLI 回归通过
 
-当前 Case 配置：
+当前分层：
 
-```yaml
-backend:
-  provider: mock
-
-protocol:
-  type: chat_completions
-
-model: mock-model
+```text
+BackendConfig
+    ↓
+Protocol Adapter
+    ↓
+Sync / Async HTTP Transport
+    ↓
+HTTPX
 ```
 
-真实 Endpoint 将使用：
+Raw Transport 当前只理解：
 
-```yaml
-backend:
-  provider: openai_compatible
-  base_url: http://127.0.0.1:8000/v1
-  api_key_env: INFERMATRIX_API_KEY
-  timeout:
-    connect: 5.0
-    read: 120.0
-    write: 30.0
-    pool: 5.0
+* HTTP Method
+* URL
+* Header
+* Body
+* Status
+* Timeout
+* Network Error
+* Protocol Error
 
-protocol:
-  type: chat_completions
-```
+Raw Transport不理解：
 
-#### 当前唯一子阶段：E-1B Raw HTTP Transport
+* Chat Completion
+* Responses Item
+* Tool Call
+* Structured Output
+* SSE Event
+
+#### 当前唯一子阶段：E-1C SSE Wire Decoder
 
 目标：
 
-* 引入 HTTPX
-* 定义协议无关的 HTTP Transport 接口
-* 实现同步原始 HTTP 请求
-* 实现 Connect、Read、Write 和 Pool Timeout
-* 分类连接错误、超时、HTTP 状态错误和响应读取错误
-* 捕获原始 Request 与 Response
-* 对 Authorization 等敏感 Header 脱敏
-* 默认不自动重试
-* 使用 `httpx.MockTransport` 完成确定性测试
+* 解析 `event:` 和 `data:` 字段
+* 支持多行 Data
+* 支持空行结束一个 Event
+* 支持注释行
+* 支持 `[DONE]`
+* 保留原始 SSE Frame
+* 检测不完整 Frame
+* 检测连接结束前未完成事件
+* 不提前解析 Chat Completions 或 Responses 语义
 
 #### 后续计划
 
-1. E-1B：Raw HTTP Transport
-2. E-1C：SSE Wire Decoder
-3. E-1D：Chat Completions Adapter，并将 Protocol 写入正式 RunReport
-4. E-1E：真实 vLLM Smoke Test 与第一份真实 Evidence Bundle
-
-当前不提前实现：
-
-* Responses Adapter
-* Semantic Trace
-* Invariant Engine
-* vLLM Cache 实验
-* SGLang 对比
+1. E-1C：SSE Wire Decoder
+2. E-1D：Chat Completions Request/Response Adapter
+3. E-1E：真实 vLLM Smoke Test 与 Evidence Bundle
+4. F：Responses / Open Responses Adapter
