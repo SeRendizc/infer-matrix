@@ -7,7 +7,20 @@ from infermatrix.transports.base import (
 from infermatrix.transports.errors import (
     HttpStatusError,
     HttpTransportError,
+    SseDecodeError,
+    SseDecoderClosedError,
+    SseIncompleteFrameError,
+    SseUtf8DecodeError,
     require_success,
+)
+from infermatrix.transports.sse_decoder import (
+    SseDecoder,
+    decode_sse_chunks,
+)
+from infermatrix.transports.sse_models import (
+    SseEvent,
+    SseField,
+    SseFrame,
 )
 from infermatrix.transports.httpx_transport import (
     AsyncHttpxTransport,
@@ -38,4 +51,13 @@ __all__ = [
     "HttpResponseRecord",
     "HttpExchange",
     "TransportFailureRecord",
+    "SseDecoder",
+    "decode_sse_chunks",
+    "SseField",
+    "SseEvent",
+    "SseFrame",
+    "SseDecodeError",
+    "SseUtf8DecodeError",
+    "SseIncompleteFrameError",
+    "SseDecoderClosedError",
 ]

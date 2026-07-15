@@ -59,3 +59,51 @@ def require_success(
         raise HttpStatusError(exchange)
 
     return exchange
+
+
+class SseDecodeError(ValueError):
+    """SSE Wire 数据无法被正确解码。"""
+
+
+class SseUtf8DecodeError(SseDecodeError):
+    """SSE Stream 包含非法 UTF-8。"""
+
+    def __init__(
+        self,
+        *,
+        start: int,
+        end: int,
+        reason: str,
+    ) -> None:
+        self.start = start
+        self.end = end
+        self.reason = reason
+
+        super().__init__(
+            "SSE stream contains invalid UTF-8: "
+            f"bytes {start}:{end}, {reason}."
+        )
+
+
+class SseIncompleteFrameError(SseDecodeError):
+    """连接结束时仍存在未由空行终止的 SSE Frame。"""
+
+    def __init__(
+        self,
+        partial_raw_text: str,
+    ) -> None:
+        self.partial_raw_text = partial_raw_text
+
+        super().__init__(
+            "SSE stream ended before the current "
+            "frame was terminated by a blank line."
+        )
+
+
+class SseDecoderClosedError(SseDecodeError):
+    """已完成的 Decoder 又收到了新数据。"""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "SSE decoder has already been finalized."
+        )
