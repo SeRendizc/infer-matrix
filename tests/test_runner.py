@@ -2,10 +2,15 @@
 
 import json
 
+import httpx
 import pytest
 
-from infermatrix.cases import load_case, BackendConfig
-from infermatrix.runner import UnsupportedBackendError, run_case, run_case_file
+from infermatrix.cases import InferCase
+from infermatrix.runner import (
+    run_case,
+    run_case_file,
+)
+from infermatrix.transports import HttpxTransport
 
 
 def test_runner_executes_basic_chat_case() -> None:
@@ -24,6 +29,10 @@ def test_runner_executes_basic_chat_case() -> None:
     message = result.response["choices"][0]["message"]
     assert message["role"] == "assistant"
     assert "InferMatrix" in message["content"]
+
+    assert result.protocol == "chat_completions"
+    assert result.http_exchange is None
+    assert result.protocol_observations == []
 
 
 def test_runner_executes_tool_call_case() -> None:
@@ -54,6 +63,10 @@ def test_runner_executes_tool_call_case() -> None:
         "unit": "celsius",
     }
 
+    assert result.protocol == "chat_completions"
+    assert result.http_exchange is None
+    assert result.protocol_observations == []
+
 
 def test_runner_executes_streaming_case() -> None:
     """runner 应该能执行 streaming case，并返回 streaming chunks。"""
@@ -81,23 +94,194 @@ def test_runner_executes_streaming_case() -> None:
 
     assert merged_content == '{"status": "ok", "answer": "InferMatrix streaming mock"}'
 
+    assert result.protocol == "chat_completions"
+    assert result.http_exchange is None
+    assert result.protocol_observations == []
 
-def test_runner_rejects_unsupported_backend() -> None:
-    """当前 Runner 遇到尚未接入的真实 Backend 时应该明确失败。"""
 
-    case = load_case("examples/basic_chat.yaml")
+def _make_real_backend_case(
+    *,
+    streaming: bool = False,
+    api_key_env: str | None = None,
+) -> InferCase:
+    backend: dict[str, object] = {
+        "provider": "openai_compatible",
+        "base_url": "http://127.0.0.1:8000/v1",
+    }
 
-    unsupported_case = case.model_copy(
-        update={
-            "backend": BackendConfig(
-                provider="openai_compatible",
-                base_url="http://127.0.0.1:8000/v1",
-            ),
+    if api_key_env is not None:
+        backend["api_key_env"] = api_key_env
+
+    return InferCase.model_validate(
+        {
+            "case_id": "runner-real-chat",
+            "backend": backend,
+            "protocol": {
+                "type": "chat_completions",
+            },
+            "model": "Qwen3-8B",
+            "features": {
+                "streaming": streaming,
+            },
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "你好",
+                }
+            ],
         }
     )
 
+
+def test_runner_supports_openai_compatible_backend() -> None:
+    case = _make_real_backend_case(
+        api_key_env="TEST_API_KEY"
+    )
+
+    response_payload = {
+        "id": "chatcmpl-runner-test",
+        "object": "chat.completion",
+        "created": 1_784_000_000,
+        "model": "Qwen3-8B",
+        "choices": [
+            {
+                "index": 0,
+                "message": {
+                    "role": "assistant",
+                    "content": "你好，我是模型。",
+                },
+                "finish_reason": "stop",
+            }
+        ],
+    }
+
+    captured_request: dict[str, object] = {}
+
+    def handler(
+        request: httpx.Request,
+    ) -> httpx.Response:
+        captured_request["url"] = str(request.url)
+        captured_request["body"] = json.loads(
+            request.content
+        )
+        captured_request["authorization"] = (
+            request.headers.get("authorization")
+        )
+
+        return httpx.Response(
+            status_code=200,
+            headers={
+                "content-type": "application/json",
+            },
+            json=response_payload,
+        )
+
+    with HttpxTransport(
+        timeout=case.backend.timeout,
+        transport=httpx.MockTransport(handler),
+    ) as transport:
+        result = run_case(
+            case,
+            transport=transport,
+            environ={
+                "TEST_API_KEY": "runner-secret",
+            },
+        )
+
+    assert result.case_id == case.case_id
+    assert result.backend == "openai_compatible"
+    assert result.protocol == "chat_completions"
+    assert result.response_type == "chat_completion"
+    assert result.verdict == "completed"
+
+    assert result.response == response_payload
+    assert result.chunks is None
+
+    assert result.http_exchange is not None
+    assert result.protocol_observations == []
+
+    assert captured_request["url"] == (
+        "http://127.0.0.1:8000/"
+        "v1/chat/completions"
+    )
+
+    assert captured_request["authorization"] == (
+        "Bearer runner-secret"
+    )
+
+    assert captured_request["body"] == {
+        "model": "Qwen3-8B",
+        "messages": [
+            {
+                "role": "user",
+                "content": "你好",
+            }
+        ],
+        "stream": False,
+    }
+
+    # Runner 保存的证据必须经过脱敏。
+    assert "runner-secret" not in (
+        result.http_exchange.model_dump_json()
+    )
+
+
+def test_runner_preserves_protocol_observations() -> None:
+    case = _make_real_backend_case()
+
+    def handler(
+        request: httpx.Request,
+    ) -> httpx.Response:
+        return httpx.Response(
+            status_code=200,
+            json={
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "content": "你好",
+                        },
+                        "finish_reason": "stop",
+                    }
+                ]
+            },
+        )
+
+    with HttpxTransport(
+        timeout=case.backend.timeout,
+        transport=httpx.MockTransport(handler),
+    ) as transport:
+        result = run_case(
+            case,
+            transport=transport,
+            environ={},
+        )
+
+    codes = {
+        observation.code
+        for observation
+        in result.protocol_observations
+    }
+
+    assert codes == {
+        "missing_id",
+        "missing_model",
+        "missing_created",
+        "missing_object",
+    }
+
+
+def test_runner_rejects_real_streaming_before_e1d2() -> None:
+    case = _make_real_backend_case(
+        streaming=True
+    )
+
     with pytest.raises(
-        UnsupportedBackendError,
-        match="Unsupported backend",
+        NotImplementedError,
+        match="E-1D2",
     ):
-        run_case(unsupported_case)
+        run_case(
+            case,
+            environ={},
+        )

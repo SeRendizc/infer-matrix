@@ -24,7 +24,7 @@ Pipeline 不负责写入文件。
 """
 
 from __future__ import annotations
-
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Literal
 
@@ -65,6 +65,17 @@ from infermatrix.runner import (
     UnsupportedBackendError,
     run_case,
 )
+from infermatrix.clients.openai_compatible import (
+    OpenAICompatibleClientError,
+)
+from infermatrix.protocols.chat_completions import (
+    ChatCompletionsProtocolError,
+)
+from infermatrix.transports.base import SyncHttpTransport
+from infermatrix.transports.errors import (
+    HttpStatusError,
+    HttpTransportError,
+)
 
 
 class PipelineResult(BaseModel):
@@ -88,14 +99,20 @@ def run_case_pipeline(
     *,
     case: InferCase,
     case_file: str | Path,
+    transport: SyncHttpTransport | None = None,
+    environ: Mapping[str, str] | None = None,
 ) -> PipelineResult:
     """运行完整 Case Pipeline，并生成统一报告。"""
 
     try:
-        run_result = run_case(case)
+        run_result = run_case(case, transport=transport, environ=environ)
     except (
         UnsupportedBackendError,
         NotImplementedError,
+        OpenAICompatibleClientError,
+        HttpTransportError,
+        HttpStatusError,
+        ChatCompletionsProtocolError,
     ) as error:
         report = assemble_failure_report(
             case=case,
@@ -104,9 +121,7 @@ def run_case_pipeline(
             reason=str(error),
             response_type="execution_error",
             raw_output=None,
-            details={
-                "error_type": type(error).__name__,
-            },
+            details=_build_execution_error_details(error),
         )
 
         return PipelineResult(
@@ -314,3 +329,25 @@ def _extract_available_raw_output(
         return run_result.chunks
 
     return None
+
+
+def _build_execution_error_details(
+    error: Exception,
+) -> dict[str, Any]:
+    """提取执行异常中可安全写入报告的结构化证据。"""
+
+    details: dict[str, Any] = {
+        "error_type": type(error).__name__,
+    }
+
+    if isinstance(error, HttpTransportError):
+        details["transport_failure"] = (
+            error.failure.model_dump(mode="json")
+        )
+
+    elif isinstance(error, HttpStatusError):
+        details["http_exchange"] = (
+            error.exchange.model_dump(mode="json")
+        )
+
+    return details
