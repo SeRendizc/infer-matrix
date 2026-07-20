@@ -13,6 +13,9 @@ from infermatrix.clients.mock_openai import MockOpenAIClient
 from infermatrix.clients.openai_compatible import (
     OpenAICompatibleClient,
 )
+from infermatrix.clients.openai_compatible_stream import (
+    StreamingOpenAICompatibleClient,
+)
 from infermatrix.protocols.chat_completions import (
     ProtocolObservation,
 )
@@ -91,12 +94,6 @@ def run_case(
         return _run_mock_case(case)
 
     if provider == "openai_compatible":
-        if case.features.streaming:
-            raise NotImplementedError(
-                "Real OpenAI-compatible streaming "
-                "will be implemented in E-1D2."
-            )
-
         return _run_openai_compatible_case(
             case=case,
             transport=transport,
@@ -150,7 +147,7 @@ def _run_openai_compatible_case(
     transport: SyncHttpTransport | None,
     environ: Mapping[str, str] | None,
 ) -> RunResult:
-    """执行真实 OpenAI-compatible 非流式 Case。
+    """执行真实 OpenAI-compatible Case。
 
     外部传入的 Transport 不由 Runner 关闭。
 
@@ -181,6 +178,28 @@ def _execute_with_transport(
     environ: Mapping[str, str] | None,
 ) -> RunResult:
     """使用指定 Transport 执行真实 Client。"""
+
+    if case.features.streaming:
+        call_result = StreamingOpenAICompatibleClient(
+            transport=transport,
+            environ=environ,
+        ).stream_case(case)
+
+        return RunResult(
+            case_id=case.case_id,
+            backend=case.backend.provider,
+            protocol=case.protocol.type,
+            model=case.model,
+            response_type=(
+                "chat_completion_chunks"
+            ),
+            verdict="completed",
+            chunks=call_result.chunks,
+            http_exchange=call_result.exchange,
+            protocol_observations=list(
+                call_result.observations
+            ),
+        )
 
     client = OpenAICompatibleClient(
         transport=transport,

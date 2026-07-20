@@ -3,7 +3,6 @@
 import json
 
 import httpx
-import pytest
 
 from infermatrix.cases import InferCase
 from infermatrix.runner import (
@@ -270,18 +269,3 @@ def test_runner_preserves_protocol_observations() -> None:
         "missing_created",
         "missing_object",
     }
-
-
-def test_runner_rejects_real_streaming_before_e1d2() -> None:
-    case = _make_real_backend_case(
-        streaming=True
-    )
-
-    with pytest.raises(
-        NotImplementedError,
-        match="E-1D2",
-    ):
-        run_case(
-            case,
-            environ={},
-        )

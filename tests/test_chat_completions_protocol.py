@@ -1,6 +1,5 @@
 from infermatrix.cases import InferCase
 from infermatrix.protocols.chat_completions import (
-    ChatCompletionsProtocolError,
     build_chat_completions_request,
 )
 import json
@@ -92,7 +91,7 @@ def test_request_includes_tools() -> None:
     assert request["tools"] == case.tools
 
 
-def test_non_streaming_adapter_rejects_streaming_case() -> None:
+def test_request_adapter_supports_streaming_case() -> None:
     case = InferCase.model_validate(
         {
             "case_id": "streaming-chat",
@@ -105,14 +104,9 @@ def test_non_streaming_adapter_rejects_streaming_case() -> None:
         }
     )
 
-    try:
-        build_chat_completions_request(case)
-    except ChatCompletionsProtocolError as error:
-        assert "non-streaming" in str(error)
-    else:
-        raise AssertionError(
-            "Expected ChatCompletionsProtocolError."
-        )
+    payload = build_chat_completions_request(case)
+
+    assert payload["stream"] is True
 
 
 def _make_exchange(

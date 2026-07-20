@@ -1,29 +1,7 @@
-"""End-to-end execution pipeline for InferMatrix.
-
-阶段 D-6 的目标：
-
-    InferCase
-        ↓
-    Runner
-        ↓
-    Parser
-        ↓
-    Analyzer
-        ↓
-    RunReport
-
-Pipeline 保证：
-
-- 正常执行会生成 PASS 或 FAIL 报告
-- Analyzer 不符合预期会生成 FAIL 报告
-- Parser 抛出已知解析错误时会生成 FAIL 报告
-- Runner 抛出已知执行错误时会生成 FAIL 报告
-
-Pipeline 不负责写入文件。
-文件写入仍然属于 reports writer。
-"""
+"""End-to-end execution pipeline for InferMatrix."""
 
 from __future__ import annotations
+
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Literal
@@ -39,6 +17,9 @@ from infermatrix.analyzers.tool_call_checker import (
     check_tool_call,
 )
 from infermatrix.cases import InferCase
+from infermatrix.clients.openai_compatible import (
+    OpenAICompatibleClientError,
+)
 from infermatrix.parsers.chat_completion import (
     ChatCompletionParseError,
     parse_chat_completion_response,
@@ -55,6 +36,10 @@ from infermatrix.parsers.tool_call_parser import (
     ToolCallParseError,
     parse_tool_call_response,
 )
+from infermatrix.protocols.chat_completions import (
+    ChatCompletionsProtocolError,
+    ChatCompletionsResponseError,
+)
 from infermatrix.reports.assembler import (
     assemble_failure_report,
     assemble_run_report,
@@ -65,31 +50,24 @@ from infermatrix.runner import (
     UnsupportedBackendError,
     run_case,
 )
-from infermatrix.clients.openai_compatible import (
-    OpenAICompatibleClientError,
+from infermatrix.transports.base import (
+    SyncHttpTransport,
 )
-from infermatrix.protocols.chat_completions import (
-    ChatCompletionsProtocolError,
-)
-from infermatrix.transports.base import SyncHttpTransport
 from infermatrix.transports.errors import (
     HttpStatusError,
     HttpTransportError,
 )
+from infermatrix.transports.models import (
+    HttpExchange,
+)
 
 
 class PipelineResult(BaseModel):
-    """一次完整 Pipeline 执行的结果。
+    """一次完整 Pipeline 执行的结果。"""
 
-    report:
-        无论成功或失败，都尽量生成 RunReport。
-
-    exit_code:
-        0 表示 Case 满足预期。
-        1 表示执行、解析、分析或检查失败。
-    """
-
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid"
+    )
 
     report: RunReport
     exit_code: Literal[0, 1]
@@ -105,7 +83,11 @@ def run_case_pipeline(
     """运行完整 Case Pipeline，并生成统一报告。"""
 
     try:
-        run_result = run_case(case, transport=transport, environ=environ)
+        run_result = run_case(
+            case,
+            transport=transport,
+            environ=environ,
+        )
     except (
         UnsupportedBackendError,
         NotImplementedError,
@@ -121,7 +103,16 @@ def run_case_pipeline(
             reason=str(error),
             response_type="execution_error",
             raw_output=None,
-            details=_build_execution_error_details(error),
+            http_exchange=(
+                _extract_error_http_exchange(
+                    error
+                )
+            ),
+            details=(
+                _build_execution_error_details(
+                    error
+                )
+            ),
         )
 
         return PipelineResult(
@@ -151,10 +142,20 @@ def run_case_pipeline(
             case_file=case_file,
             stage="parsing",
             reason=str(error),
-            response_type=run_result.response_type,
+            response_type=(
+                run_result.response_type
+            ),
             raw_output=raw_output,
+            http_exchange=(
+                run_result.http_exchange
+            ),
+            protocol_observations=(
+                run_result.protocol_observations
+            ),
             details={
-                "error_type": type(error).__name__,
+                "error_type": (
+                    type(error).__name__
+                ),
             },
         )
 
@@ -171,10 +172,20 @@ def run_case_pipeline(
             case_file=case_file,
             stage="analysis",
             reason=str(error),
-            response_type=run_result.response_type,
+            response_type=(
+                run_result.response_type
+            ),
             raw_output=raw_output,
+            http_exchange=(
+                run_result.http_exchange
+            ),
+            protocol_observations=(
+                run_result.protocol_observations
+            ),
             details={
-                "error_type": type(error).__name__,
+                "error_type": (
+                    type(error).__name__
+                ),
             },
         )
 
@@ -192,7 +203,9 @@ def run_case_pipeline(
     )
 
     exit_code: Literal[0, 1] = (
-        1 if report.verdict == "fail" else 0
+        1
+        if report.verdict == "fail"
+        else 0
     )
 
     return PipelineResult(
@@ -217,7 +230,8 @@ def _parse_and_analyze(
     ):
         if run_result.chunks is None:
             raise StreamParseError(
-                "Streaming RunResult does not contain chunks."
+                "Streaming RunResult does not "
+                "contain chunks."
             )
 
         parsed_stream = parse_streaming_chunks(
@@ -239,8 +253,10 @@ def _parse_and_analyze(
         )
 
         combined_output = {
-            "stream": parsed_stream.model_dump(
-                mode="json"
+            "stream": (
+                parsed_stream.model_dump(
+                    mode="json"
+                )
             ),
             "structured_output": (
                 structured_output.model_dump(
@@ -271,17 +287,24 @@ def _parse_and_analyze(
             parsed_message=parsed_tool_message,
         )
 
-        return parsed_tool_message, list(tool_checks)
+        return (
+            parsed_tool_message,
+            list(tool_checks),
+        )
 
-    parsed_message = parse_chat_completion_response(
-        run_result.response
+    parsed_message = (
+        parse_chat_completion_response(
+            run_result.response
+        )
     )
 
     if not case.features.structured_output:
         return parsed_message, []
 
-    structured_output = parse_structured_output_text(
-        parsed_message.content
+    structured_output = (
+        parse_structured_output_text(
+            parsed_message.content
+        )
     )
 
     schema_result = check_json_schema(
@@ -314,7 +337,7 @@ def _extract_available_raw_output(
     | list[dict[str, Any]]
     | None
 ):
-    """提取 Pipeline 当前已经获得的原始输出。"""
+    """提取 Pipeline 已经获得的协议原始输出。"""
 
     if (
         run_result.response_type
@@ -334,20 +357,51 @@ def _extract_available_raw_output(
 def _build_execution_error_details(
     error: Exception,
 ) -> dict[str, Any]:
-    """提取执行异常中可安全写入报告的结构化证据。"""
+    """提取执行异常中可安全写入报告的数据。"""
 
     details: dict[str, Any] = {
         "error_type": type(error).__name__,
     }
 
-    if isinstance(error, HttpTransportError):
+    if isinstance(
+        error,
+        HttpTransportError,
+    ):
         details["transport_failure"] = (
-            error.failure.model_dump(mode="json")
+            error.failure.model_dump(
+                mode="json"
+            )
         )
 
-    elif isinstance(error, HttpStatusError):
-        details["http_exchange"] = (
-            error.exchange.model_dump(mode="json")
+    elif isinstance(
+        error,
+        HttpStatusError,
+    ):
+        details["status_code"] = (
+            error.exchange.response.status_code
+        )
+        details["reason_phrase"] = (
+            error.exchange.response.reason_phrase
         )
 
     return details
+
+
+def _extract_error_http_exchange(
+    error: Exception,
+) -> HttpExchange | None:
+    """从执行异常中提取已存在的 HTTP Exchange。"""
+
+    if isinstance(
+        error,
+        HttpStatusError,
+    ):
+        return error.exchange
+
+    if isinstance(
+        error,
+        ChatCompletionsResponseError,
+    ):
+        return error.exchange
+
+    return None

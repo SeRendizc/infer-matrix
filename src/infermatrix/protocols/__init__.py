@@ -3,6 +3,7 @@
 from infermatrix.protocols.chat_completions import (
     ChatCompletionsProtocolError,
     ChatCompletionsResponseDecodeError,
+    ChatCompletionsResponseError,
     ChatCompletionsResponseResult,
     ChatCompletionsResponseShapeError,
     ProtocolObservation,
@@ -13,6 +14,7 @@ from infermatrix.protocols.chat_completions import (
 __all__ = [
     "ChatCompletionsProtocolError",
     "ChatCompletionsResponseDecodeError",
+    "ChatCompletionsResponseError",
     "ChatCompletionsResponseResult",
     "ChatCompletionsResponseShapeError",
     "ProtocolObservation",

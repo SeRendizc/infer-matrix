@@ -9,24 +9,41 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from infermatrix.cases import InferCase
-from infermatrix.transports import (
-    HttpExchange,
-    require_success,
-)
+from infermatrix.transports.errors import require_success
+from infermatrix.transports.models import HttpExchange
 
 
 class ChatCompletionsProtocolError(ValueError):
     """Chat Completions 协议适配失败。"""
 
 
-class ChatCompletionsResponseDecodeError(
+class ChatCompletionsResponseError(
     ChatCompletionsProtocolError
+):
+    """Chat Completions Response 协议错误。
+
+    即使响应无法被正确解析，也保留原始 HTTP Exchange，
+    以便 Pipeline 和 Report 保存完整请求、响应及状态信息。
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        exchange: HttpExchange,
+    ) -> None:
+        self.exchange = exchange
+        super().__init__(message)
+
+
+class ChatCompletionsResponseDecodeError(
+    ChatCompletionsResponseError
 ):
     """HTTP Body 无法解码为 Chat Completions JSON。"""
 
 
 class ChatCompletionsResponseShapeError(
-    ChatCompletionsProtocolError
+    ChatCompletionsResponseError
 ):
     """JSON 顶层结构不符合 Chat Completions 协议。"""
 
@@ -34,8 +51,8 @@ class ChatCompletionsResponseShapeError(
 class ProtocolObservation(BaseModel):
     """一条非致命协议兼容性偏差。
 
-    这类问题不会阻止后续 Parser 工作，但应被保留下来，
-    供 Report 和 Backend 对比使用。
+    这类偏差不会阻止后续 Parser 工作，但会被写入报告，
+    供不同 OpenAI-compatible Backend 之间进行行为比较。
     """
 
     model_config = ConfigDict(
@@ -65,9 +82,9 @@ class ChatCompletionsResponseResult(BaseModel):
 def build_chat_completions_request(
     case: InferCase,
 ) -> dict[str, Any]:
-    """把 InferCase 转换成非流式 Chat Completions Request。
+    """把 InferCase 转换成 Chat Completions Request。
 
-    这个函数只负责协议转换，不发送 HTTP 请求。
+    本函数只负责协议转换，不负责发送 HTTP 请求。
     """
 
     if case.protocol.type != "chat_completions":
@@ -76,18 +93,13 @@ def build_chat_completions_request(
             "protocol.type='chat_completions'."
         )
 
-    if case.features.streaming:
-        raise ChatCompletionsProtocolError(
-            "E-1D1 only supports non-streaming requests."
-        )
-
     payload: dict[str, Any] = {
         "model": case.model,
         "messages": [
             message.model_dump(mode="json")
             for message in case.messages
         ],
-        "stream": False,
+        "stream": case.features.streaming,
     }
 
     if case.tools:
@@ -101,18 +113,25 @@ def parse_chat_completions_response(
 ) -> ChatCompletionsResponseResult:
     """解析非流式 Chat Completions HTTP Response。
 
-    该函数负责协议 Envelope，不负责解析 assistant content。
+    本函数负责：
+
+    - HTTP 成功状态检查
+    - UTF-8 检查
+    - JSON 解码
+    - 顶层 Protocol Envelope 检查
+    - 非致命协议偏差收集
+
+    本函数不负责解析 assistant message、tool_calls 或业务预期。
     """
 
-    # Raw Transport 会保留所有 HTTP 状态。
-    # 到协议层后，显式要求当前响应必须为 2xx。
     require_success(exchange)
 
     body = exchange.response.body
 
     if body.encoding != "utf-8":
         raise ChatCompletionsResponseDecodeError(
-            "Chat Completions response body must be valid UTF-8."
+            "Chat Completions response body must be valid UTF-8.",
+            exchange=exchange,
         )
 
     try:
@@ -120,12 +139,14 @@ def parse_chat_completions_response(
     except JSONDecodeError as error:
         raise ChatCompletionsResponseDecodeError(
             "Chat Completions response body is not valid JSON: "
-            f"line {error.lineno}, column {error.colno}."
+            f"line {error.lineno}, column {error.colno}.",
+            exchange=exchange,
         ) from error
 
     if not isinstance(payload, dict):
         raise ChatCompletionsResponseShapeError(
-            "Chat Completions response JSON must be an object."
+            "Chat Completions response JSON must be an object.",
+            exchange=exchange,
         )
 
     choices = payload.get("choices")
@@ -133,7 +154,8 @@ def parse_chat_completions_response(
     if not isinstance(choices, list):
         raise ChatCompletionsResponseShapeError(
             "Chat Completions response field "
-            "'choices' must be a list."
+            "'choices' must be a list.",
+            exchange=exchange,
         )
 
     observations = _collect_response_observations(
@@ -149,7 +171,7 @@ def parse_chat_completions_response(
 def _collect_response_observations(
     payload: dict[str, Any],
 ) -> list[ProtocolObservation]:
-    """收集不妨碍后续解析的协议兼容性偏差。"""
+    """收集不会阻止后续 Parser 执行的协议兼容性偏差。"""
 
     observations: list[ProtocolObservation] = []
 
@@ -218,7 +240,6 @@ def _collect_response_observations(
 
     usage = payload.get("usage")
 
-    # usage 本身可以不返回，但如果返回，应当是 object。
     if usage is not None and not isinstance(
         usage,
         dict,
