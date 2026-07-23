@@ -1,5 +1,7 @@
 # InferMatrix Streaming P0 Completion Checkpoint
 
+> Historical note: this document predates the rename from InferMatrix to Agent Eval Lab.
+
 Date: 2026-07-19
 
 ## Verified capability

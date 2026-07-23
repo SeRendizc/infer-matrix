@@ -1,5 +1,7 @@
 # Findings
 
+> Historical note: this document predates the rename from InferMatrix to Agent Eval Lab.
+
 ## 已知事实与边界
 
 - 当前只执行 D1：建立隔离的 WSL2 GPU/PyTorch 环境，不启动后续开发。

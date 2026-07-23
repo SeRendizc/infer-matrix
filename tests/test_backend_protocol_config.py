@@ -5,9 +5,9 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from infermatrix.cases import (
+from agent_eval_lab.cases import (
     BackendConfig,
-    InferCase,
+    EvalCase,
     ProtocolConfig,
     TimeoutConfig,
     load_case,
@@ -48,7 +48,7 @@ def test_openai_compatible_backend_accepts_endpoint() -> None:
     config = BackendConfig(
         provider="openai_compatible",
         base_url="http://127.0.0.1:8000/v1",
-        api_key_env="INFERMATRIX_API_KEY",
+        api_key_env="AGENT_EVAL_API_KEY",
     )
 
     assert config.provider == (
@@ -58,7 +58,7 @@ def test_openai_compatible_backend_accepts_endpoint() -> None:
         "http://127.0.0.1:8000"
     )
     assert config.api_key_env == (
-        "INFERMATRIX_API_KEY"
+        "AGENT_EVAL_API_KEY"
     )
 
 
@@ -102,9 +102,9 @@ def test_unknown_protocol_is_rejected() -> None:
 
 
 def test_complete_real_backend_case_can_be_validated() -> None:
-    """真实 Backend Case 应通过 InferCase Schema。"""
+    """真实 Backend Case 应通过 EvalCase Schema。"""
 
-    case = InferCase.model_validate(
+    case = EvalCase.model_validate(
         {
             "case_id": "real_chat_001",
             "backend": {
@@ -113,7 +113,7 @@ def test_complete_real_backend_case_can_be_validated() -> None:
                     "http://127.0.0.1:8000/v1"
                 ),
                 "api_key_env": (
-                    "INFERMATRIX_API_KEY"
+                    "AGENT_EVAL_API_KEY"
                 ),
             },
             "protocol": {

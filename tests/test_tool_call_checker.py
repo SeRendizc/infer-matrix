@@ -1,9 +1,9 @@
 """Tests for tool call analyzer."""
 
-from infermatrix.analyzers.tool_call_checker import check_tool_call
-from infermatrix.cases import CaseExpected, load_case
-from infermatrix.clients.mock_openai import MockOpenAIClient
-from infermatrix.parsers.tool_call_parser import (
+from agent_eval_lab.analyzers.tool_call_checker import check_tool_call
+from agent_eval_lab.cases import CaseExpected, load_case
+from agent_eval_lab.clients.mock_openai import MockOpenAIClient
+from agent_eval_lab.parsers.tool_call_parser import (
     ParsedToolCall,
     parse_tool_call_response,
 )

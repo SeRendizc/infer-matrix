@@ -1,5 +1,7 @@
 # 人机分工与 Ownership Gate
 
+> Historical note: this document predates the rename from InferMatrix to Agent Eval Lab.
+
 ## 1. 标签定义
 
 | 标签 | 含义 | Codex 可以做什么 | 本人必须做什么 |

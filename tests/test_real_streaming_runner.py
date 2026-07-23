@@ -2,13 +2,13 @@ import json
 
 import httpx
 
-from infermatrix.cases import InferCase
-from infermatrix.runner import run_case
-from infermatrix.transports import HttpxTransport
+from agent_eval_lab.cases import EvalCase
+from agent_eval_lab.runner import run_case
+from agent_eval_lab.transports import HttpxTransport
 
 
 def test_runner_executes_real_buffered_streaming_case() -> None:
-    case = InferCase.model_validate(
+    case = EvalCase.model_validate(
         {
             "case_id": "runner-real-stream",
             "backend": {

@@ -2,9 +2,9 @@
 
 import pytest
 
-from infermatrix.cases import load_case
-from infermatrix.clients.mock_openai import MockOpenAIClient
-from infermatrix.parsers.stream_parser import (
+from agent_eval_lab.cases import load_case
+from agent_eval_lab.clients.mock_openai import MockOpenAIClient
+from agent_eval_lab.parsers.stream_parser import (
     ParsedStreamMessage,
     StreamParseError,
     parse_streaming_chunks,
@@ -47,13 +47,13 @@ def test_parse_mock_streaming_chunks() -> None:
         '{"status"',
         ': "ok"',
         ', "answer"',
-        ': "InferMatrix streaming mock"',
+        ': "Agent Eval Lab streaming mock"',
         "}",
     ]
 
     assert (
         parsed.merged_content
-        == '{"status": "ok", "answer": "InferMatrix streaming mock"}'
+        == '{"status": "ok", "answer": "Agent Eval Lab streaming mock"}'
     )
 
 

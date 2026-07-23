@@ -2,10 +2,10 @@
 
 import pytest
 
-from infermatrix.cases import load_case
-from infermatrix.clients.mock_openai import MockOpenAIClient
-from infermatrix.parsers.stream_parser import parse_streaming_chunks
-from infermatrix.parsers.structured_output_parser import (
+from agent_eval_lab.cases import load_case
+from agent_eval_lab.clients.mock_openai import MockOpenAIClient
+from agent_eval_lab.parsers.stream_parser import parse_streaming_chunks
+from agent_eval_lab.parsers.structured_output_parser import (
     ParsedStructuredOutput,
     StructuredOutputParseError,
     parse_structured_output_text,
@@ -62,7 +62,7 @@ def test_parse_structured_output_from_streaming_case() -> None:
 
     assert structured_output.data == {
         "status": "ok",
-        "answer": "InferMatrix streaming mock",
+        "answer": "Agent Eval Lab streaming mock",
     }
 
 

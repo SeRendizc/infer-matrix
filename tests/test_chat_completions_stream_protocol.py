@@ -3,15 +3,15 @@ from datetime import datetime, timezone
 
 import pytest
 
-from infermatrix.cases import InferCase
-from infermatrix.protocols.chat_completions import (
+from agent_eval_lab.cases import EvalCase
+from agent_eval_lab.protocols.chat_completions import (
     build_chat_completions_request,
 )
-from infermatrix.protocols.chat_completions_stream import (
+from agent_eval_lab.protocols.chat_completions_stream import (
     ChatCompletionsStreamResponseDecodeError,
     parse_chat_completions_stream_response,
 )
-from infermatrix.transports.models import (
+from agent_eval_lab.transports.models import (
     HeaderEntry,
     HttpExchange,
     HttpRequestRecord,
@@ -20,8 +20,8 @@ from infermatrix.transports.models import (
 )
 
 
-def _make_streaming_case() -> InferCase:
-    return InferCase.model_validate(
+def _make_streaming_case() -> EvalCase:
+    return EvalCase.model_validate(
         {
             "case_id": "stream-protocol",
             "backend": {

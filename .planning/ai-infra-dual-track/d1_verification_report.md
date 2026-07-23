@@ -1,5 +1,7 @@
 # D1 Verification Report
 
+> Historical note: this document predates the rename from InferMatrix to Agent Eval Lab.
+
 ## Result
 
 技术 Gate：**PASS**

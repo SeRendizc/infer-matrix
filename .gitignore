@@ -33,6 +33,6 @@ Thumbs.db
 uv.lock
 .agents
 
-# InferMatrix generated run reports
+# Agent Eval Lab generated run reports
 runs/
 artifacts/

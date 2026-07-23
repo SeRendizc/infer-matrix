@@ -1,5 +1,7 @@
 # InferMatrix × Model Lab：四周 AI Infra 双线冲刺
 
+> Historical note: this document predates the rename from InferMatrix to Agent Eval Lab.
+
 > 状态：执行中（D2 技术验收通过，Ownership Gate 待完成）
 > 周期：2026-07-19 ～ 2026-08-15（28 天）
 > 主线：Model Lab 学习与实验；InferMatrix 负责真实 serving、诊断与证据固化

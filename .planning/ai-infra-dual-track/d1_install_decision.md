@@ -1,5 +1,7 @@
 # D1 Install Decision
 
+> Historical note: this document predates the rename from InferMatrix to Agent Eval Lab.
+
 ## 2026-07-18
 
 - 使用隔离环境：`/root/.venvs/infermatrix-model-lab`。

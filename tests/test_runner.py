@@ -1,15 +1,15 @@
-"""Tests for InferMatrix runner."""
+"""Tests for Agent Eval Lab runner."""
 
 import json
 
 import httpx
 
-from infermatrix.cases import InferCase
-from infermatrix.runner import (
+from agent_eval_lab.cases import EvalCase
+from agent_eval_lab.runner import (
     run_case,
     run_case_file,
 )
-from infermatrix.transports import HttpxTransport
+from agent_eval_lab.transports import HttpxTransport
 
 
 def test_runner_executes_basic_chat_case() -> None:
@@ -27,7 +27,7 @@ def test_runner_executes_basic_chat_case() -> None:
 
     message = result.response["choices"][0]["message"]
     assert message["role"] == "assistant"
-    assert "InferMatrix" in message["content"]
+    assert "Agent Eval Lab" in message["content"]
 
     assert result.protocol == "chat_completions"
     assert result.http_exchange is None
@@ -91,7 +91,7 @@ def test_runner_executes_streaming_case() -> None:
         for choice in chunk["choices"]
     )
 
-    assert merged_content == '{"status": "ok", "answer": "InferMatrix streaming mock"}'
+    assert merged_content == '{"status": "ok", "answer": "Agent Eval Lab streaming mock"}'
 
     assert result.protocol == "chat_completions"
     assert result.http_exchange is None
@@ -102,7 +102,7 @@ def _make_real_backend_case(
     *,
     streaming: bool = False,
     api_key_env: str | None = None,
-) -> InferCase:
+) -> EvalCase:
     backend: dict[str, object] = {
         "provider": "openai_compatible",
         "base_url": "http://127.0.0.1:8000/v1",
@@ -111,7 +111,7 @@ def _make_real_backend_case(
     if api_key_env is not None:
         backend["api_key_env"] = api_key_env
 
-    return InferCase.model_validate(
+    return EvalCase.model_validate(
         {
             "case_id": "runner-real-chat",
             "backend": backend,

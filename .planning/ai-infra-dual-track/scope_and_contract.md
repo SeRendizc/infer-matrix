@@ -1,5 +1,7 @@
 # InferMatrix 范围与双项目证据契约
 
+> Historical note: this document predates the rename from InferMatrix to Agent Eval Lab.
+
 ## 1. 当前事实基线（2026-07-18）
 
 - 分支：`phase-e1d`。

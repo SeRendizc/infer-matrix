@@ -15,11 +15,11 @@ features:
 
 messages:
   - role: user
-    content: "Explain what InferMatrix is in one sentence."
+    content: "Explain what Agent Eval Lab is in one sentence."
 
 expected:
-  contains_text: "InferMatrix"
+  contains_text: "Agent Eval Lab"
 
 metadata:
   purpose: "Validate that the case loader can parse a minimal chat case."
-  mock_response: "InferMatrix is an Agentic LLM Systems behavior analysis framework."
+  mock_response: "Agent Eval Lab is an Agentic LLM Systems behavior analysis framework."

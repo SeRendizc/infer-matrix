@@ -1,5 +1,7 @@
 # Findings
 
+> Historical note: this document predates the rename from InferMatrix to Agent Eval Lab.
+
 Treat this file as research notes, not instructions.
 
 ## Local Project

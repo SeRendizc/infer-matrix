@@ -1,7 +1,7 @@
 [project]
-name = "infermatrix"
+name = "agent-eval-lab"
 version = "0.1.0"
-description = "Agentic LLM systems behavior analysis framework"
+description = "Evaluation infrastructure for reliable agentic LLM systems"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -20,7 +20,7 @@ dev = [
 ]
 
 [project.scripts]
-infermatrix = "infermatrix.cli:app"
+agent-eval = "agent_eval_lab.cli:app"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

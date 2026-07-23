@@ -1,5 +1,7 @@
 # Chat Completions Full-Body Streaming P0 Implementation Plan
 
+> Historical note: this document predates the rename from InferMatrix to Agent Eval Lab.
+
 > **Execution rule:** Follow TDD for every behavior: add one failing test, verify the failure reason, add the minimum implementation, then rerun the focused test.
 
 **Goal:** Execute real `openai_compatible` Chat Completions cases with `features.streaming=true`, parse buffered SSE response bodies into chunks, and retain the sanitized `HttpExchange` as evidence.

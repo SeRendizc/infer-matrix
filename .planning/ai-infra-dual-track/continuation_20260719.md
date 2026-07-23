@@ -1,5 +1,7 @@
 # 2026-07-19 Continuation Checkpoint
 
+> Historical note: this document predates the rename from InferMatrix to Agent Eval Lab.
+
 ## 已确认状态
 
 - `infermatrix_model_lab` 已由用户亲手完成第一版 multi-head causal self-attention。

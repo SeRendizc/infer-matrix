@@ -1,5 +1,7 @@
 # Progress
 
+> Historical note: this document predates the rename from InferMatrix to Agent Eval Lab.
+
 ## 2026-07-18｜规划建立
 
 - 用户确认采用四周 Codex-assisted 双线冲刺。

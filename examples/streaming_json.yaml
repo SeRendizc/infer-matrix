@@ -38,5 +38,5 @@ metadata:
     - '{"status"'
     - ': "ok"'
     - ', "answer"'
-    - ': "InferMatrix streaming mock"'
+    - ': "Agent Eval Lab streaming mock"'
     - '}'

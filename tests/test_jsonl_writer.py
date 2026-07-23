@@ -1,11 +1,11 @@
-"""Tests for InferMatrix JSONL report writer."""
+"""Tests for Agent Eval Lab JSONL report writer."""
 
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from infermatrix.reports.jsonl_writer import write_jsonl_report
-from infermatrix.reports.models import ReportCheck, RunReport
+from agent_eval_lab.reports.jsonl_writer import write_jsonl_report
+from agent_eval_lab.reports.models import ReportCheck, RunReport
 
 
 def _example_report(
@@ -67,7 +67,7 @@ def _example_report(
         verdict="pass",
         failure_reasons=[],
         reproduction_command=(
-            "infermatrix run examples/tool_call_weather.yaml"
+            "agent-eval run examples/tool_call_weather.yaml"
         ),
     )
 

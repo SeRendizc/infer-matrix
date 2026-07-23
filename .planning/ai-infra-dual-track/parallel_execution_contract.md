@@ -1,5 +1,7 @@
 # 双线并行执行契约
 
+> Historical note: this document predates the rename from InferMatrix to Agent Eval Lab.
+
 ## 目标
 
 InferMatrix 与 Model Lab 从同一天开始并行推进，但采用不同授权模式：

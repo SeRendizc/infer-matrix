@@ -2,15 +2,15 @@ import json
 
 import httpx
 
-from infermatrix.cases import InferCase
-from infermatrix.clients.openai_compatible_stream import (
+from agent_eval_lab.cases import EvalCase
+from agent_eval_lab.clients.openai_compatible_stream import (
     StreamingOpenAICompatibleClient,
 )
-from infermatrix.transports import HttpxTransport
+from agent_eval_lab.transports import HttpxTransport
 
 
-def _make_case() -> InferCase:
-    return InferCase.model_validate(
+def _make_case() -> EvalCase:
+    return EvalCase.model_validate(
         {
             "case_id": "stream-client",
             "backend": {

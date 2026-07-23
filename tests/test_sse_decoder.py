@@ -4,7 +4,7 @@ import codecs
 
 import pytest
 
-from infermatrix.transports import (
+from agent_eval_lab.transports import (
     SseDecoder,
     SseDecoderClosedError,
     SseIncompleteFrameError,

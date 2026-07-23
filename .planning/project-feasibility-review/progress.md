@@ -1,5 +1,7 @@
 # Progress
 
+> Historical note: this document predates the rename from InferMatrix to Agent Eval Lab.
+
 ## 2026-07-09
 
 - Started feasibility review for local `D:\infermatrix` project.

@@ -1,5 +1,7 @@
 # Chat Completions Full-Body Streaming P0 Design
 
+> Historical note: this document predates the rename from InferMatrix to Agent Eval Lab.
+
 ## Goal
 
 让真实 `openai_compatible` case 在 `features.streaming=true` 时完成最小协议闭环：发送 `stream=true` 请求，解析完整 HTTP response body 中的 SSE data events，输出 Chat Completions chunks，并保留脱敏后的 `HttpExchange`。

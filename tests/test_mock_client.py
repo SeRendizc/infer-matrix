@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from infermatrix.cases import CaseFeatures, load_case
-from infermatrix.clients.mock_openai import MockOpenAIClient
+from agent_eval_lab.cases import CaseFeatures, load_case
+from agent_eval_lab.clients.mock_openai import MockOpenAIClient
 
 
 def test_mock_client_returns_chat_completion_response() -> None:
@@ -35,7 +35,7 @@ def test_mock_client_returns_chat_completion_response() -> None:
     message = choice["message"]
     assert message["role"] == "assistant"
     assert message["content"] == case.metadata["mock_response"]
-    assert "InferMatrix" in message["content"]
+    assert "Agent Eval Lab" in message["content"]
 
     # Assert: check usage placeholder.
     assert response["usage"] == {

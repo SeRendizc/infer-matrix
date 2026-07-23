@@ -1,8 +1,8 @@
-"""Tests for InferMatrix case loading."""
+"""Tests for Agent Eval Lab case loading."""
 
 from pathlib import Path
 
-from infermatrix.cases import load_case
+from agent_eval_lab.cases import load_case
 
 
 def test_load_basic_chat_case() -> None:
@@ -25,9 +25,9 @@ def test_load_basic_chat_case() -> None:
 
     assert len(case.messages) == 1
     assert case.messages[0].role == "user"
-    assert "InferMatrix" in case.messages[0].content
+    assert "Agent Eval Lab" in case.messages[0].content
 
-    assert case.expected.contains_text == "InferMatrix"
+    assert case.expected.contains_text == "Agent Eval Lab"
     assert case.metadata["purpose"] == (
         "Validate that the case loader can parse a minimal chat case."
     )

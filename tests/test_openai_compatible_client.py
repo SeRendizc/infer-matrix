@@ -3,18 +3,18 @@ import json
 import httpx
 import pytest
 
-from infermatrix.cases import InferCase
-from infermatrix.clients.openai_compatible import (
+from agent_eval_lab.cases import EvalCase
+from agent_eval_lab.clients.openai_compatible import (
     OpenAICompatibleClient,
     OpenAICompatibleClientConfigurationError,
 )
-from infermatrix.transports import HttpxTransport
+from agent_eval_lab.transports import HttpxTransport
 
 
 def _make_case(
     *,
     api_key_env: str | None = None,
-) -> InferCase:
+) -> EvalCase:
     backend: dict[str, object] = {
         "provider": "openai_compatible",
         "base_url": "http://127.0.0.1:8000/v1",
@@ -23,7 +23,7 @@ def _make_case(
     if api_key_env is not None:
         backend["api_key_env"] = api_key_env
 
-    return InferCase.model_validate(
+    return EvalCase.model_validate(
         {
             "case_id": "real-chat",
             "backend": backend,
@@ -245,7 +245,7 @@ def test_client_preserves_protocol_observations() -> None:
 
 
 def test_client_rejects_mock_backend() -> None:
-    case = InferCase.model_validate(
+    case = EvalCase.model_validate(
         {
             "case_id": "wrong-backend",
             "backend": {

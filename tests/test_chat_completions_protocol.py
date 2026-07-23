@@ -1,5 +1,5 @@
-from infermatrix.cases import InferCase
-from infermatrix.protocols.chat_completions import (
+from agent_eval_lab.cases import EvalCase
+from agent_eval_lab.protocols.chat_completions import (
     build_chat_completions_request,
 )
 import json
@@ -7,12 +7,12 @@ from datetime import datetime, timezone
 
 import pytest
 
-from infermatrix.protocols.chat_completions import (
+from agent_eval_lab.protocols.chat_completions import (
     ChatCompletionsResponseDecodeError,
     ChatCompletionsResponseShapeError,
     parse_chat_completions_response,
 )
-from infermatrix.transports import (
+from agent_eval_lab.transports import (
     HeaderEntry,
     HttpExchange,
     HttpRequestRecord,
@@ -23,7 +23,7 @@ from infermatrix.transports import (
 
 
 def test_build_basic_chat_completions_request() -> None:
-    case = InferCase.model_validate(
+    case = EvalCase.model_validate(
         {
             "case_id": "real-chat",
             "backend": {
@@ -58,7 +58,7 @@ def test_build_basic_chat_completions_request() -> None:
 
 
 def test_request_includes_tools() -> None:
-    case = InferCase.model_validate(
+    case = EvalCase.model_validate(
         {
             "case_id": "tool-call",
             "protocol": {
@@ -92,7 +92,7 @@ def test_request_includes_tools() -> None:
 
 
 def test_request_adapter_supports_streaming_case() -> None:
-    case = InferCase.model_validate(
+    case = EvalCase.model_validate(
         {
             "case_id": "streaming-chat",
             "protocol": {

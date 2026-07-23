@@ -1,5 +1,7 @@
 # 小型开源模型调试桥接计划
 
+> Historical note: this document predates the rename from InferMatrix to Agent Eval Lab.
+
 ## 结论
 
 后半程应加入小型开源模型调试，但它不是第三个独立项目，而是 Model Lab 与 InferMatrix 的桥：

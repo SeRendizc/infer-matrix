@@ -1,14 +1,14 @@
-"""Tests for the InferMatrix end-to-end pipeline."""
+"""Tests for the Agent Eval Lab end-to-end pipeline."""
 
 from pathlib import Path
 
-from infermatrix.cases import load_case, BackendConfig
-from infermatrix.pipeline import run_case_pipeline
-from infermatrix.runner import RunResult
+from agent_eval_lab.cases import load_case, BackendConfig
+from agent_eval_lab.pipeline import run_case_pipeline
+from agent_eval_lab.runner import RunResult
 
 import httpx
 
-from infermatrix.transports import HttpxTransport
+from agent_eval_lab.transports import HttpxTransport
 
 
 def test_pipeline_passes_basic_chat() -> None:
@@ -187,7 +187,7 @@ def test_pipeline_reports_parser_failure(
         )
 
     monkeypatch.setattr(
-        "infermatrix.pipeline.run_case",
+        "agent_eval_lab.pipeline.run_case",
         fake_run_case,
     )
 
