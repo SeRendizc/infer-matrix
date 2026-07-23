@@ -1,34 +1,34 @@
-"""Tests for InferMatrix RunReport assembler."""
+"""Tests for Agent Eval Lab RunReport assembler."""
 
 from pathlib import Path
 
 import pytest
 
-from infermatrix.analyzers.schema_checker import (
+from agent_eval_lab.analyzers.schema_checker import (
     check_json_schema,
 )
-from infermatrix.analyzers.tool_call_checker import (
+from agent_eval_lab.analyzers.tool_call_checker import (
     check_tool_call,
 )
-from infermatrix.cases import load_case
-from infermatrix.parsers.chat_completion import (
+from agent_eval_lab.cases import load_case
+from agent_eval_lab.parsers.chat_completion import (
     parse_chat_completion_response,
 )
-from infermatrix.parsers.stream_parser import (
+from agent_eval_lab.parsers.stream_parser import (
     parse_streaming_chunks,
 )
-from infermatrix.parsers.structured_output_parser import (
+from agent_eval_lab.parsers.structured_output_parser import (
     parse_structured_output_text,
 )
-from infermatrix.parsers.tool_call_parser import (
+from agent_eval_lab.parsers.tool_call_parser import (
     parse_tool_call_response,
 )
-from infermatrix.reports.assembler import (
+from agent_eval_lab.reports.assembler import (
     ReportAssemblyError,
     assemble_run_report,
 )
-from infermatrix.reports.models import RunReport
-from infermatrix.runner import RunResult, run_case
+from agent_eval_lab.reports.models import RunReport
+from agent_eval_lab.runner import RunResult, run_case
 
 
 def test_assemble_basic_chat_report() -> None:
@@ -64,12 +64,12 @@ def test_assemble_basic_chat_report() -> None:
 
     assert report.parsed_output is not None
     assert report.parsed_output["role"] == "assistant"
-    assert "InferMatrix" in report.parsed_output["content"]
+    assert "Agent Eval Lab" in report.parsed_output["content"]
 
     assert report.raw_output == run_result.response
 
     assert report.reproduction_command == (
-        'infermatrix run "examples/basic_chat.yaml"'
+        'agent-eval run "examples/basic_chat.yaml"'
     )
 
 
@@ -176,7 +176,7 @@ def test_assemble_tool_call_report() -> None:
 
 
 def test_assembler_rejects_mismatched_case_id() -> None:
-    """InferCase 与 RunResult 的 case_id 不一致时应失败。"""
+    """EvalCase 与 RunResult 的 case_id 不一致时应失败。"""
 
     case = load_case(
         "examples/basic_chat.yaml"

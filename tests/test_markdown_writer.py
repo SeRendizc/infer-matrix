@@ -5,12 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from infermatrix.reports.markdown_renderer import render_markdown_report
-from infermatrix.reports.markdown_writer import (
+from agent_eval_lab.reports.markdown_renderer import render_markdown_report
+from agent_eval_lab.reports.markdown_writer import (
     ReportWriteError,
     write_markdown_report,
 )
-from infermatrix.reports.models import ReportCheck, RunReport
+from agent_eval_lab.reports.models import ReportCheck, RunReport
 
 
 def _example_report(
@@ -75,7 +75,7 @@ def _example_report(
         verdict="pass",
         failure_reasons=[],
         reproduction_command=(
-            "infermatrix run examples/tool_call_weather.yaml"
+            "agent-eval run examples/tool_call_weather.yaml"
         ),
     )
 

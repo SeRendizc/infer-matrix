@@ -2,9 +2,9 @@
 
 import pytest
 
-from infermatrix.cases import load_case
-from infermatrix.clients.mock_openai import MockOpenAIClient
-from infermatrix.parsers.chat_completion import (
+from agent_eval_lab.cases import load_case
+from agent_eval_lab.clients.mock_openai import MockOpenAIClient
+from agent_eval_lab.parsers.chat_completion import (
     ChatCompletionParseError,
     ParsedAssistantMessage,
     parse_chat_completion_response,

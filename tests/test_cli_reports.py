@@ -6,7 +6,7 @@ from pathlib import Path
 import yaml
 from typer.testing import CliRunner
 
-from infermatrix.cli import app
+from agent_eval_lab.cli import app
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -48,7 +48,7 @@ def test_cli_generates_reports_for_basic_chat(
         encoding="utf-8"
     )
 
-    assert "# InferMatrix Run Report" in markdown
+    assert "# Agent Eval Lab Run Report" in markdown
     assert "basic_chat_001" in markdown
     assert "**PASS**" in markdown
 

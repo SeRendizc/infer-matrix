@@ -1,4 +1,4 @@
-"""Tests for InferMatrix raw HTTP transports."""
+"""Tests for Agent Eval Lab raw HTTP transports."""
 
 import asyncio
 
@@ -6,8 +6,8 @@ import httpx
 import pytest
 
 from urllib.parse import parse_qs, urlsplit
-from infermatrix.cases import TimeoutConfig
-from infermatrix.transports import (
+from agent_eval_lab.cases import TimeoutConfig
+from agent_eval_lab.transports import (
     AsyncHttpxTransport,
     HttpStatusError,
     HttpTransportError,

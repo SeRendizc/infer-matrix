@@ -2,8 +2,8 @@
 
 from datetime import datetime, timezone
 
-from infermatrix.reports.markdown_renderer import render_markdown_report
-from infermatrix.reports.models import ReportCheck, RunReport
+from agent_eval_lab.reports.markdown_renderer import render_markdown_report
+from agent_eval_lab.reports.models import ReportCheck, RunReport
 
 
 def _passing_tool_call_report() -> RunReport:
@@ -68,7 +68,7 @@ def _passing_tool_call_report() -> RunReport:
         verdict="pass",
         failure_reasons=[],
         reproduction_command=(
-            "infermatrix run examples/tool_call_weather.yaml"
+            "agent-eval run examples/tool_call_weather.yaml"
         ),
     )
 
@@ -80,7 +80,7 @@ def test_render_markdown_report_contains_main_sections() -> None:
 
     markdown = render_markdown_report(report)
 
-    assert markdown.startswith("# InferMatrix Run Report\n")
+    assert markdown.startswith("# Agent Eval Lab Run Report\n")
 
     assert "## Summary" in markdown
     assert "## Case" in markdown
@@ -144,7 +144,7 @@ def test_render_markdown_report_contains_reproduction_command() -> None:
 
     assert "```bash" in markdown
     assert (
-        "infermatrix run examples/tool_call_weather.yaml"
+        "agent-eval run examples/tool_call_weather.yaml"
         in markdown
     )
 

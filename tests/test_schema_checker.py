@@ -1,13 +1,13 @@
 """Tests for JSON Schema checker."""
 
-from infermatrix.analyzers.schema_checker import (
+from agent_eval_lab.analyzers.schema_checker import (
     SchemaCheckResult,
     check_json_schema,
 )
-from infermatrix.cases import CaseExpected, load_case
-from infermatrix.clients.mock_openai import MockOpenAIClient
-from infermatrix.parsers.stream_parser import parse_streaming_chunks
-from infermatrix.parsers.structured_output_parser import (
+from agent_eval_lab.cases import CaseExpected, load_case
+from agent_eval_lab.clients.mock_openai import MockOpenAIClient
+from agent_eval_lab.parsers.stream_parser import parse_streaming_chunks
+from agent_eval_lab.parsers.structured_output_parser import (
     ParsedStructuredOutput,
     parse_structured_output_text,
 )
@@ -54,7 +54,7 @@ def test_check_json_schema_passes_for_streaming_json_case() -> None:
     assert result.expected_schema == case.expected.json_schema
     assert result.actual_data == {
         "status": "ok",
-        "answer": "InferMatrix streaming mock",
+        "answer": "Agent Eval Lab streaming mock",
     }
     assert "matches expected JSON Schema" in result.reason
 

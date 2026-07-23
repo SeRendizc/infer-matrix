@@ -1,5 +1,7 @@
 # InferMatrix Project Feasibility Review
 
+> Historical note: this document predates the rename from InferMatrix to Agent Eval Lab.
+
 Goal: analyze the local InferMatrix project together with the user's shared ChatGPT/Codex context, then assess feasibility, personal value, roadmap correctness, and needed adjustments.
 
 ## Phases

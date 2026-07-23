@@ -5,13 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from infermatrix.reports.bundle_writer import (
+from agent_eval_lab.reports.bundle_writer import (
     write_report_bundle,
 )
-from infermatrix.reports.errors import (
+from agent_eval_lab.reports.errors import (
     ReportWriteError,
 )
-from infermatrix.reports.models import RunReport
+from agent_eval_lab.reports.models import RunReport
 
 
 def _report() -> RunReport:
@@ -37,13 +37,13 @@ def _report() -> RunReport:
             "object": "chat.completion",
         },
         parsed_output={
-            "content": "InferMatrix",
+            "content": "Agent Eval Lab",
         },
         checks=[],
         verdict="pass",
         failure_reasons=[],
         reproduction_command=(
-            'infermatrix run "examples/basic_chat.yaml"'
+            'agent-eval run "examples/basic_chat.yaml"'
         ),
     )
 
@@ -74,7 +74,7 @@ def test_bundle_removes_markdown_when_jsonl_fails(
         )
 
     monkeypatch.setattr(
-        "infermatrix.reports.bundle_writer."
+        "agent_eval_lab.reports.bundle_writer."
         "write_jsonl_report",
         fail_jsonl,
     )

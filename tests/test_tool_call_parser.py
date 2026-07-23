@@ -2,9 +2,9 @@
 
 import pytest
 
-from infermatrix.clients.mock_openai import MockOpenAIClient
-from infermatrix.cases import load_case
-from infermatrix.parsers.tool_call_parser import (
+from agent_eval_lab.clients.mock_openai import MockOpenAIClient
+from agent_eval_lab.cases import load_case
+from agent_eval_lab.parsers.tool_call_parser import (
     ParsedToolCallMessage,
     ToolCallParseError,
     parse_tool_call_response,

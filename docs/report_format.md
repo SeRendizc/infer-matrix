@@ -1,6 +1,6 @@
-# InferMatrix 报告格式
+# Agent Eval Lab 报告格式
 
-InferMatrix 每次执行 Case 时生成两种报告：
+Agent Eval Lab 每次执行 Case 时生成两种报告：
 
 * Markdown：供开发者阅读、调试和提交 GitHub Issue
 * JSONL：供程序批量读取、过滤和比较
@@ -72,5 +72,5 @@ JSONL 不使用外层数组，因此可以逐条追加和逐行读取。
 * `parsing`
 * `analysis`
 
-YAML 无法加载或无法通过 Case Schema 校验时，由于尚未产生合法 `InferCase`，CLI 会直接输出错误，不生成正式 RunReport。
+YAML 无法加载或无法通过 Case Schema 校验时，由于尚未产生合法 `EvalCase`，CLI 会直接输出错误，不生成正式 RunReport。
     

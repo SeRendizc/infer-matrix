@@ -1,0 +1,26 @@
+case_id: real-chat-smoke
+
+backend:
+  provider: openai_compatible
+  base_url: http://127.0.0.1:8000/v1
+
+protocol:
+  type: chat_completions
+
+model: local-model
+
+features:
+  streaming: false
+  tool_calling: false
+  structured_output: false
+
+messages:
+  - role: user
+    content: Reply with a short greeting and confirm that the service is working.
+
+tools: []
+
+expected: {}
+
+metadata:
+  purpose: real-openai-compatible-smoke-test

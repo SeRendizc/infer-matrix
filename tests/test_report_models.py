@@ -1,6 +1,6 @@
 """Tests for shared report data models."""
 
-from infermatrix.reports.models import (
+from agent_eval_lab.reports.models import (
     ReportCheck,
     RunReport,
     build_run_report,
@@ -45,7 +45,7 @@ def test_build_run_report_passes_when_no_check_fails() -> None:
         },
         checks=checks,
         reproduction_command=(
-            "infermatrix run examples/tool_call_weather.yaml"
+            "agent-eval run examples/tool_call_weather.yaml"
         ),
     )
 
@@ -92,7 +92,7 @@ def test_build_run_report_fails_when_any_check_fails() -> None:
         },
         checks=checks,
         reproduction_command=(
-            "infermatrix run examples/tool_call_weather.yaml"
+            "agent-eval run examples/tool_call_weather.yaml"
         ),
     )
 
@@ -124,7 +124,7 @@ def test_each_report_gets_a_unique_run_id() -> None:
         },
         "checks": [],
         "reproduction_command": (
-            "infermatrix run examples/basic_chat.yaml"
+            "agent-eval run examples/basic_chat.yaml"
         ),
     }
 
